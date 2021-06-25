@@ -12,11 +12,11 @@ class TreeNode():
         self.parent = None
         self.left_child = None
         self.right_child = None
-        self.color = 'Black'
+        self.color = 'Black' # initailly set node color to Black
         self.prev = None
         self.next = None
         self.data = data
-    
+
     def __repr__(self):
         return str(self.value)
 
