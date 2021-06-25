@@ -12,7 +12,7 @@ class Node():
         self.parent = None
         self.left_child = None
         self.right_child = None
-        self.color = 'Black'
+        self.color = 'Black' # initailly set node color to Black
     
     def __repr__(self):
         return str(self.value)
