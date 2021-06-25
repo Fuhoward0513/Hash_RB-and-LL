@@ -9,6 +9,7 @@ import argparse
 class Node():
     def __init__(self, key):
         self.value = key
+        self.data = f"{self.value}"+"d" #data 自己改
         self.parent = None
         self.left_child = None
         self.right_child = None
@@ -41,40 +42,41 @@ class RBTree():
             else:
                 self._search(node.right_child, key, output)
         else:
-            # return node.value
-            val = node.value
-            col = node.color
-            output.write(f'{val}: {col} ')
+            # reutun the Node
+            return node
+            # output.write(node.data)
     
     """ Insert """
-    def insert(self, key):
+    def insert(self, input_node):
         if(self.root==None):
-            print('insert:', key)
-            self.root = Node(key)
+            print('insert:', input_node.value)
+            self.root = Node(input_node.value)
             self.root.color = "Black"
         else:
-            print('insert:', key)
-            self._insert(self.root, key)
+            print('insert:', input_node.value)
+            self._insert(self.root, input_node)
             
-    def _insert(self, node, key):
-        if(key < node.value):
+    def _insert(self, node, input_node):
+        if(input_node.value < node.value):
             if(node.left_child==None):
-                node.left_child = Node(key)
+                node.left_child = Node(input_node.value)
                 node.left_child.color = 'Red'
                 node.left_child.parent = node
                 self._insert_fixnode(node.left_child)
             else:
-                self._insert(node.left_child, key)
-        elif(key > node.value):
+                self._insert(node.left_child, input_node)
+        elif(input_node.value > node.value):
             if(node.right_child==None):
-                node.right_child = Node(key)
+                node.right_child = Node(input_node.value)
                 node.right_child.color = 'Red'
                 node.right_child.parent = node
                 self._insert_fixnode(node.right_child)
             else:
-                self._insert(node.right_child, key)
+                self._insert(node.right_child, input_node)
         else:
             print("item already existed")
+            print("cover the original node!!!")
+            node.data = input_node.data
     
     def find_uncle(self, node): # 找 parent 旁邊的 node
         grandparent = node.parent.parent
@@ -204,7 +206,7 @@ class RBTree():
         self._insert_RR_Rotation(node.right_child)
         
     
-    """ Delete """
+    """ Delete , input: the key value of the Node """
     def delete(self, key):          # delete one node
         print('delete:', key)
         self._delete(self.root, key)
@@ -504,7 +506,7 @@ class RBTree():
                 if lines.startswith("insert"):
                     value_list = lines.split(' ')
                     for value in value_list[1:]:
-                        self.insert(int(value))
+                        self.insert(Node(int(value)))
                 if lines.startswith('inorder'):
                     self.inorder(output)
                 
