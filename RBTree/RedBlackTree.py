@@ -6,13 +6,16 @@ Created on Thu Jun 10 13:24:09 2021
 """
 import argparse
 
-class Node():
-    def __init__(self, key):
+class TreeNode():
+    def __init__(self, key, data):
         self.value = key
         self.parent = None
         self.left_child = None
         self.right_child = None
         self.color = 'Black'
+        self.prev = None
+        self.next = None
+        self.data = data
     
     def __repr__(self):
         return str(self.value)
@@ -20,6 +23,7 @@ class Node():
 class RBTree():
     def __init__(self):
         self.root = None
+        self.allNodes = []
     
     """ Search """
     def search(self, key, output):
@@ -47,32 +51,32 @@ class RBTree():
             output.write(f'{val}: {col} ')
     
     """ Insert """
-    def insert(self, key):
+    def insert(self, key, data):
         if(self.root==None):
             print('insert:', key)
-            self.root = Node(key)
+            self.root = TreeNode(key, data)
             self.root.color = "Black"
         else:
             print('insert:', key)
-            self._insert(self.root, key)
+            self._insert(self.root, key, data)
             
-    def _insert(self, node, key):
+    def _insert(self, node, key, data):
         if(key < node.value):
             if(node.left_child==None):
-                node.left_child = Node(key)
+                node.left_child = TreeNode(key, data)
                 node.left_child.color = 'Red'
                 node.left_child.parent = node
                 self._insert_fixnode(node.left_child)
             else:
-                self._insert(node.left_child, key)
+                self._insert(node.left_child, key, data)
         elif(key > node.value):
             if(node.right_child==None):
-                node.right_child = Node(key)
+                node.right_child = TreeNode(key, data)
                 node.right_child.color = 'Red'
                 node.right_child.parent = node
                 self._insert_fixnode(node.right_child)
             else:
-                self._insert(node.right_child, key)
+                self._insert(node.right_child, key, data)
         else:
             print("item already existed")
     
@@ -220,7 +224,7 @@ class RBTree():
             else:
                 # Case 1: node has no child
                 if(node.left_child==None and node.right_child==None): 
-                    if(node.parent!=None):  # 不是 Node
+                    if(node.parent!=None):  # 不是 TreeNode
                         if(node.parent.value<node.value):
                             node.parent.right_child = None
                             self._del_fixnode(self.sibling(node))
@@ -297,7 +301,7 @@ class RBTree():
             node = node.right_child
         return node
     
-    def sibling(self, node):    # 找旁邊的 Node
+    def sibling(self, node):    # 找旁邊的 TreeNode
         if(node.value < node.parent.value):
             return node.parent.right_child
         elif(node.value > node.parent.value):
@@ -309,7 +313,7 @@ class RBTree():
             return False
         else:
             return True
-    def _color(self, node): # Node 的color 也為 Black
+    def _color(self, node): # TreeNode 的color 也為 Black
         if(node==None):
             return 'Black'
         else:
@@ -466,7 +470,7 @@ class RBTree():
     def _del_RL_Rotation(self, node):
         # Rotate
         parent = node.parent
-        parent.right_child = node.left_child # connet node's left child to node's parent
+        parent.right_child = node.left_child # connect node's left child to node's parent
         node.left_child.parent = parent
         
         node.left_child = parent.right_child.right_child
@@ -486,6 +490,28 @@ class RBTree():
         self._inorder(self.root, output)
         output.write('\n')
         
+    def getAllTreeNodes(self, node):
+        if node:
+            if(node.left_child!=None):
+                self.getAllTreeNodes(node.left_child)
+            val = node.value
+            data = node.data
+            col = node.color
+            self.allNodes.append(node)
+            if(node.right_child!=None):
+                self.getAllTreeNodes(node.right_child)
+    def printInorder(self, node):
+        if node:
+            if(node.left_child!=None):
+                self.printInorder(node.left_child)
+            val = node.value
+            data = node.data
+            col = node.color
+            print("(%-1s)(%-1s)\t"%(data, col), end="=>")
+            if(node.right_child!=None):
+                self.printInorder(node.right_child)
+
+
     def _inorder(self, node, output):
         if node:
             if(node.left_child!=None):
@@ -504,7 +530,7 @@ class RBTree():
                 if lines.startswith("insert"):
                     value_list = lines.split(' ')
                     for value in value_list[1:]:
-                        self.insert(int(value))
+                        self.insert(int(value), 'tempData')
                 if lines.startswith('inorder'):
                     self.inorder(output)
                 
@@ -526,8 +552,8 @@ if __name__ == '__main__' :
     # It's important and repeat three times
     #########################
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", type=str, default = './input_1.txt',help="Input file root.")
-    parser.add_argument("--output", type=str, default = './output_1.txt',help="Output file root.")
+    parser.add_argument("--input", type=str, default = './RBTree/input_1.txt',help="Input file root.")
+    parser.add_argument("--output", type=str, default = './RBTree/output_1.txt',help="Output file root.")
     args = parser.parse_args()
     
     BRTree = RBTree()
