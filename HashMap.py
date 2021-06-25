@@ -20,7 +20,7 @@ class HashMap():
     TABLE_INITIAL_CAPACITY = 16
     TREEIFY_THRESHOLD = 8
     UNTREEIFY_THRESHOLD = 6
-    loadFactor = 0.75
+    loadFactor = 5
     MIN_TREEIFY_CAPACITY = 64
 
     def __init__(self):
@@ -31,7 +31,20 @@ class HashMap():
     def incrementTotal(self):
         self.totalElement = self.totalElement + 1
     def printMap(self):
-        print(self.hashTable)
+        isExceedThre = 0
+        print("----------------------Start printing hashTable---------------------")
+        for i, bucket in enumerate(self.hashTable):
+            cnt = 0
+            print(i, end=" \t")
+            while(bucket!=None):
+                print("(%-1s)\t"%bucket.data, end="->")
+                bucket = bucket.next
+                cnt += 1
+            if(cnt >= HashMap.TREEIFY_THRESHOLD):
+                isExceedThre += 1
+            print("NONE",end="\n")
+        print("Probability of treeify: ",isExceedThre)
+        print("----------------------End printing hashTable---------------------")
     def hashCodeString(self, key):
         hashValue = 0
         for char in key:
@@ -75,7 +88,7 @@ class HashMap():
         else: # Already somebody there.
             if(root.value == newNode.value): # if exact same key, override.
                 self.hashTable[hashValue] = newNode
-                print("Existed node at root ",hashValue,". Override.")
+                print("Existed root ",hashValue,". Override.\tNo.",self.totalElement)
             elif(isinstance(root, TreeNode)): # if it's a tree, addtreeVal
                 print("Root ",hashValue," is tree. PutTreeValue.")
                 pass
@@ -89,12 +102,12 @@ class HashMap():
                         self.incrementTotal()
                         binCount += 1
                         print("Add node at position",binCount, " \tNo.", self.totalElement)
-                        if(binCount >= HashMap.TREEIFY_THRESHOLD - 1):
+                        if(binCount >= HashMap.TREEIFY_THRESHOLD):
                             self.treeifyBin()
                             print("Excess treeify_threshold, treeify.")
                         break
                     if(root.next.value == newNode.value): # if exact same key, override.
-                        print("Existed same node at", binCount, ". Override.")
+                        print("Existed same node at", binCount, ". Override.\tNo. ",self.totalElement)
                         root.next = newNode
                         break
                     binCount += 1
@@ -102,13 +115,21 @@ class HashMap():
 
         threshold = self.getTableSize() * HashMap.loadFactor
         if(self.totalElement > threshold):
-            print("=================================Start Resizing. from ",self.getTableSize()," to ", 2*self.getTableSize()," because exceed threshold: ",threshold,"=============================")
-            originalSize = self.getTableSize()
-            addTable = [None] * originalSize
-            self.hashTable += addTable
-            self.tableRehash()
+            self.tableResize()
 
+    def tableResize(self):
+        threshold = self.getTableSize() * HashMap.loadFactor
+        print("=================================Start Resizing. from ",self.getTableSize()," to ", 2*self.getTableSize()," because exceed threshold: ",threshold,"=============================")
+        originalSize = self.getTableSize()
+        addTable = [None] * originalSize
+        self.hashTable += addTable
+        self.tableRehash()
 
+    def treeifyBin(self):
+        # if(self.getTableSize() < HashMap.MIN_TREEIFY_CAPACITY):
+        #     self.tableResize()
+        # else if ()
+        pass
 
 
 
@@ -116,18 +137,15 @@ class HashMap():
 
 if __name__ == '__main__':
     hashMap = HashMap()
-    hashMap.printMap()
     
     insertNodeNum = 70
 
     for i in range(insertNodeNum):
-        linkedNode = LLNode(random.randint(1,10000), i)
+        linkedNode = LLNode(random.randint(1,100000000), i)
         hashMap.putValue(linkedNode)
-    for i in range(insertNodeNum):
-        rootNode = hashMap.hashTable[i]
         # drawer = drawOneLinkedList(rootNode)
         # drawer.draw()
     print('=====%========%==========%=========%=========%=======%========%=======')
     print("End, totalElement: ",hashMap.totalElement)
     print("End. HashTableSize: ",hashMap.getTableSize())
-
+    hashMap.printMap()
