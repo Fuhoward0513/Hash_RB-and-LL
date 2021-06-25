@@ -1,8 +1,11 @@
 insert 50 10 15 20 100 55 80 250 1 150 900 450 600 800
+search 50
+insert 50
+search 50
 inorder
 delete 150
 inorder
 delete 450
 inorder
-#delete 50
-#inorder
+delete 50
+inorder

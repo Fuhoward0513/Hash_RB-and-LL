@@ -25,7 +25,7 @@ class HashMap():
     TABLE_INITIAL_CAPACITY = 4
     TREEIFY_THRESHOLD = 3
     UNTREEIFY_THRESHOLD = 6
-    loadFactor = 5
+    loadFactor = 3
     MIN_TREEIFY_CAPACITY = 64
 
     def __init__(self):
@@ -40,13 +40,13 @@ class HashMap():
         print("----------------------Start printing hashTable---------------------")
         for i, bucket in enumerate(self.hashTable):
             print(i, end=" \t")
+            if(isinstance(bucket, RBTree)):
+                print("RBTree Inorder: ",end="")
+                bucket.printInorder(bucket.root)
+                print("Traverse completed.",end="\n")
+                continue
             while(bucket!=None):
-                if(isinstance(bucket, RBTree)):
-                    print("RBTree Inorder: ",end="")
-                    bucket.printInorder(bucket.root)
-                    break
-                else:
-                    print("(%-1s)\t"%bucket.data, end="->")
+                print("(%-1s)\t"%bucket.data, end="->")
                 bucket = bucket.next
             print("NONE",end="\n")
         print("----------------------End printing hashTable---------------------")
@@ -70,6 +70,7 @@ class HashMap():
                 if(isinstance(traveler, RBTree)):
                     # The bucket is a RBtree. Take out all nodes in it and break while.
                     traveler.getAllTreeNodes(traveler.root)
+                    print("rehashing, the tree all nodes: ", traveler.allNodes)
                     for node in traveler.allNodes:
                         rehashNodes.append(node)
                     break
@@ -97,7 +98,7 @@ class HashMap():
         else: # Already somebody there.
             if(isinstance(root, RBTree)): # if it's a tree, addtreeVal
                 print("Root ",hashValue," is tree. PutTreeValue.")
-                root.insert(newNode.value, newNode.data)
+                root.insert(self.LL2TreeNode(newNode))
                 self.incrementTotal()
             elif(root.value == newNode.value): # if exact same key, override.
                 self.hashTable[hashValue] = newNode
@@ -125,11 +126,10 @@ class HashMap():
 
         threshold = self.getTableSize() * HashMap.loadFactor
         if(self.totalElement > threshold):
+            print("=================================Start Resizing. from ",self.getTableSize()," to ", 2*self.getTableSize()," because exceed threshold: ",threshold,"=============================")
             self.tableResize()
 
     def tableResize(self):
-        threshold = self.getTableSize() * HashMap.loadFactor
-        print("=================================Start Resizing. from ",self.getTableSize()," to ", 2*self.getTableSize()," because exceed threshold: ",threshold,"=============================")
         originalSize = self.getTableSize()
         addTable = [None] * originalSize
         self.hashTable += addTable
@@ -137,12 +137,13 @@ class HashMap():
 
     def treeifyBin(self, hashValue):
         if(self.getTableSize() < HashMap.MIN_TREEIFY_CAPACITY):
+            print("=================================Start Resizing. from ",self.getTableSize()," to ", 2*self.getTableSize()," because meet treeifyBin before MIN TEEIFY CAPACITY ",HashMap.MIN_TREEIFY_CAPACITY,"=============================")
             self.tableResize()
         else:
             rbTree = RBTree()
             traveler = self.hashTable[hashValue]
             while(traveler!=None):
-                rbTree.insert(traveler.value, traveler.data)
+                rbTree.insert(self.LL2TreeNode(traveler))
                 traveler = traveler.next
             self.hashTable[hashValue] = rbTree
         
@@ -159,7 +160,7 @@ class HashMap():
 if __name__ == '__main__':
     hashMap = HashMap()
     
-    insertNodeNum = 100
+    insertNodeNum = 200
 
     for i in range(insertNodeNum):
         linkedNode = LLNode(random.randint(1,100000000), i)
