@@ -33,7 +33,34 @@ class RBTree():
         else:
             self._search(self.root, key, output)
             output.write('\n')
-            
+
+######################## for hashMap use #####################
+    def searchMap(self, key):
+        if(self.root==None):
+            print('root None~')
+            return
+        else:
+            return self._searchMap(self.root, key)
+
+    def _searchMap(self, node, key):
+        if(key < node.value):
+            # print("at left child")
+            if(node.left_child==None):
+                return
+            else:
+                return self._searchMap(node.left_child, key)
+        elif(key > node.value):
+            # print("at right child")
+            if(node.right_child==None):
+                return
+            else:
+                return self._searchMap(node.right_child, key)
+        else:
+            # print("Found!")
+            # reutun the Node
+            return node
+######################## for hashMap use #####################
+    
     def _search(self, node, key, output):
         if(key < node.value):
             if(node.left_child==None):

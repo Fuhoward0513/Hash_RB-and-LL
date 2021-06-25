@@ -2,7 +2,6 @@ from drawLinkedLists import drawLinkedLists
 from drawOneLinkedList import drawOneLinkedList
 import random
 from RBTree.RedBlackTree import RBTree
-
 class LLNode():
     def __init__(self, key, data):
         self.value = key
@@ -36,14 +35,12 @@ class HashMap():
     def incrementTotal(self):
         self.totalElement = self.totalElement + 1
     def printMap(self):
-        isExceedThre = 0
         print("----------------------Start printing hashTable---------------------")
         for i, bucket in enumerate(self.hashTable):
-            print(i, end=" \t")
+            print(i,type(bucket).__name__, end=" \t")
             if(isinstance(bucket, RBTree)):
-                print("RBTree Inorder: ",end="")
                 bucket.printInorder(bucket.root)
-                print("Traverse completed.",end="\n")
+                print("RBTree inorder traverse completed.",end="\n")
                 continue
             while(bucket!=None):
                 print("(%-1s)\t"%bucket.data, end="->")
@@ -151,6 +148,21 @@ class HashMap():
         treeNode = TreeNode(key=LLNode.value, data=LLNode.data)
         return treeNode
 
+    def findElementInMap(self, key):
+        print("Start finding data with key: ", key)
+        hashValue = self.hashCodeInteger(key)
+        findRoot = self.hashTable[hashValue]
+        if(isinstance(findRoot, RBTree)):
+            print("In treee!")
+            return findRoot.searchMap(key)
+        else:
+            traveler = findRoot
+            while(traveler!=None):
+                if(traveler.value == key):
+                    print("In linked list!")
+                    return traveler.data
+                traveler = traveler.next
+
 
 
 
@@ -164,6 +176,7 @@ if __name__ == '__main__':
 
     for i in range(insertNodeNum):
         linkedNode = LLNode(random.randint(1,100000000), i)
+        # linkedNode = LLNode(i*100, i)
         hashMap.putValue(linkedNode)
         # drawer = drawOneLinkedList(rootNode)
         # drawer.draw()
@@ -171,3 +184,9 @@ if __name__ == '__main__':
     print("End, totalElement: ",hashMap.totalElement)
     print("End. HashTableSize: ",hashMap.getTableSize())
     hashMap.printMap()
+    findKey = 101
+    data = hashMap.findElementInMap(findKey)
+    if(data != None):
+        print("Found key: ",findKey, ", value: ", data)
+    else:
+        print("Not Found key: ",findKey)
