@@ -1,7 +1,10 @@
-from drawLinkedLists import drawLinkedLists
-from drawOneLinkedList import drawOneLinkedList
+from dataVisualizer.drawLinkedLists import drawLinkedLists
+from dataVisualizer.drawOneLinkedList import drawOneLinkedList
 import random
 from RBTree.RedBlackTree import RBTree
+from dataLoader.wordLoader import csvLoader, load_words
+from time import time 
+
 class LLNode():
     def __init__(self, key, data):
         self.value = key
@@ -19,6 +22,7 @@ class TreeNode():
         self.next = None
         self.data = data
 
+LOG = False
 
 class HashMap():
     TABLE_INITIAL_CAPACITY = 4
@@ -26,7 +30,7 @@ class HashMap():
     UNTREEIFY_THRESHOLD = 6
     loadFactor = 3
     MIN_TREEIFY_CAPACITY = 64
-
+    
     def __init__(self):
         self.hashTable = [None] * HashMap.TABLE_INITIAL_CAPACITY
         self.totalElement = 0
@@ -54,10 +58,9 @@ class HashMap():
         return hashValue % self.getTableSize()
     def hashCodeInteger(self, key):
         return key % self.getTableSize()
-
     def tableRehash(self):
         # Because we didn't store hash value, we calculate hash value for each node again.
-        print("------------------------Start rehashing------------------------------")
+        if(LOG): print("------------------------Start rehashing------------------------------")
         newTable = [None]*self.getTableSize()
         rehashNodes = []
         for bucket in self.hashTable:
@@ -67,55 +70,53 @@ class HashMap():
                 if(isinstance(traveler, RBTree)):
                     # The bucket is a RBtree. Take out all nodes in it and break while.
                     traveler.getAllTreeNodes(traveler.root)
-                    print("rehashing, the tree all nodes: ", traveler.allNodes)
+                    if(LOG): print("rehashing, the tree all nodes: ", traveler.allNodes)
                     for node in traveler.allNodes:
                         rehashNodes.append(node)
                     break
                 rehashNodes.append(traveler)
                 traveler = traveler.next
            
-        print("before rehash, total element:", self.totalElement )
+        if(LOG): print("before rehash, total element:", self.totalElement )
         self.hashTable = newTable
         self.totalElement = 0
-        print("rehashnodes size: ",len(rehashNodes))
+        if(LOG): print("rehashnodes size: ",len(rehashNodes))
         for node in rehashNodes:
             node.next = None
             self.putValue(node)
-        print("------------------------End rehashing--------------------------------")
-
-
+        if(LOG): print("------------------------End rehashing--------------------------------")
     def putValue(self, newNode):
-        print('Hashing a node with key: \t\t',newNode.value)
+        if(LOG): print('Hashing a node with key: \t\t',newNode.value)
         hashValue = self.hashCodeInteger(newNode.value)
         root = self.hashTable[hashValue]
         if(root == None): # empty space
             self.hashTable[hashValue] = newNode
             self.incrementTotal()
-            print("root ",hashValue," is empty. Add node.\tNo.", self.totalElement)
+            if(LOG): print("root ",hashValue," is empty. Add node.\tNo.", self.totalElement)
         else: # Already somebody there.
             if(isinstance(root, RBTree)): # if it's a tree, addtreeVal
-                print("Root ",hashValue," is tree. PutTreeValue.")
+                if(LOG): print("Root ",hashValue," is tree. PutTreeValue.")
                 root.insert(self.LL2TreeNode(newNode))
                 self.incrementTotal()
             elif(root.value == newNode.value): # if exact same key, override.
                 self.hashTable[hashValue] = newNode
-                print("Existed root ",hashValue,". Override.\tNo.",self.totalElement)
+                if(LOG): print("Existed root ",hashValue,". Override.\tNo.",self.totalElement)
             else: # it's LL.
-                print("Root ",hashValue," exists, LL found.")
+                if(LOG): print("Root ",hashValue," exists, LL found.")
                 binCount = 0
                 while(root!=None):
-                    print("Traveling at position", binCount)
+                    if(LOG): print("Traveling at position", binCount)
                     if(root.next == None):
                         root.next = newNode
                         self.incrementTotal()
                         binCount += 1
-                        print("Add node at position",binCount, " \tNo.", self.totalElement)
+                        if(LOG): print("Add node at position",binCount, " \tNo.", self.totalElement)
                         if(binCount >= HashMap.TREEIFY_THRESHOLD):
-                            print("Excess treeify_threshold, treeify.")
+                            if(LOG): print("Excess treeify_threshold, treeify.")
                             self.treeifyBin(hashValue)
                         break
                     if(root.next.value == newNode.value): # if exact same key, override.
-                        print("Existed same node at", binCount, ". Override.\tNo. ",self.totalElement)
+                        if(LOG): print("Existed same node at", binCount, ". Override.\tNo. ",self.totalElement)
                         root.next = newNode
                         break
                     binCount += 1
@@ -123,18 +124,16 @@ class HashMap():
 
         threshold = self.getTableSize() * HashMap.loadFactor
         if(self.totalElement > threshold):
-            print("=================================Start Resizing. from ",self.getTableSize()," to ", 2*self.getTableSize()," because exceed threshold: ",threshold,"=============================")
+            if(LOG): print("=================================Start Resizing. from ",self.getTableSize()," to ", 2*self.getTableSize()," because exceed threshold: ",threshold,"=============================")
             self.tableResize()
-
     def tableResize(self):
         originalSize = self.getTableSize()
         addTable = [None] * originalSize
         self.hashTable += addTable
         self.tableRehash()
-
     def treeifyBin(self, hashValue):
         if(self.getTableSize() < HashMap.MIN_TREEIFY_CAPACITY):
-            print("=================================Start Resizing. from ",self.getTableSize()," to ", 2*self.getTableSize()," because meet treeifyBin before MIN TEEIFY CAPACITY ",HashMap.MIN_TREEIFY_CAPACITY,"=============================")
+            if(LOG): print("=================================Start Resizing. from ",self.getTableSize()," to ", 2*self.getTableSize()," because meet treeifyBin before MIN TEEIFY CAPACITY ",HashMap.MIN_TREEIFY_CAPACITY,"=============================")
             self.tableResize()
         else:
             rbTree = RBTree()
@@ -142,50 +141,52 @@ class HashMap():
             while(traveler!=None):
                 rbTree.insert(self.LL2TreeNode(traveler))
                 traveler = traveler.next
-            self.hashTable[hashValue] = rbTree
-        
+            self.hashTable[hashValue] = rbTree   
     def LL2TreeNode(self, LLNode):
         treeNode = TreeNode(key=LLNode.value, data=LLNode.data)
         return treeNode
-
     def findElementInMap(self, key):
-        print("Start finding data with key: ", key)
+        if(LOG): print("Start finding data with key: ", key)
         hashValue = self.hashCodeInteger(key)
         findRoot = self.hashTable[hashValue]
         if(isinstance(findRoot, RBTree)):
-            print("In treee!")
+            if(LOG): print("In treee!")
             return findRoot.searchMap(key)
         else:
             traveler = findRoot
             while(traveler!=None):
                 if(traveler.value == key):
-                    print("In linked list!")
+                    if(LOG): print("In linked list!")
                     return traveler.data
                 traveler = traveler.next
-
-
-
-
-
 
 
 if __name__ == '__main__':
     hashMap = HashMap()
     
-    insertNodeNum = 200
-
+    insertNodeNum = 30000
+    dataList = load_words(insertNodeNum)
+    
+    t1 = time()
     for i in range(insertNodeNum):
-        linkedNode = LLNode(random.randint(1,100000000), i)
+        linkedNode = LLNode(dataList[i]["id"], dataList[i]["word"])
         # linkedNode = LLNode(i*100, i)
         hashMap.putValue(linkedNode)
         # drawer = drawOneLinkedList(rootNode)
         # drawer.draw()
+        t2 = time()
     print('=====%========%==========%=========%=========%=======%========%=======')
     print("End, totalElement: ",hashMap.totalElement)
     print("End. HashTableSize: ",hashMap.getTableSize())
-    hashMap.printMap()
-    findKey = 101
-    data = hashMap.findElementInMap(findKey)
+    print("Time to construct map: ", t2-t1, "seconds.")
+    # hashMap.printMap()
+
+    t3 = time()
+    for i in range(insertNodeNum):
+        findKey = i
+        data = hashMap.findElementInMap(findKey)
+    t4 = time()
+    print("average searching time: {:.20f}".format((t4-t3)/insertNodeNum))
     if(data != None):
         print("Found key: ",findKey, ", value: ", data)
     else:
