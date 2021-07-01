@@ -22,14 +22,15 @@ def load_words(num):
         myData = []
         for element in mySet:
             myData.append(element)
-        random.shuffle(myData)
+        if(num > len(myData)):
+            print("We only have ",len(myData)," elements!")
+            return
         outputData = []
         for index, element in enumerate(myData):
             if(index >= num):
                 break
             outputData.append({"id":index, "word":element})
         print(index, "data fetched.")
-    # print(outputData)
     return outputData
 
 if __name__ == '__main__':

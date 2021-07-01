@@ -63,7 +63,7 @@ class HashMap():
             hashValue = hashValue * 31 + ord((char))
         return hashValue % self.getTableSize()
     def hashCodeInteger(self, key):
-        return (key+random.randint(0, self.getTableSize())) % self.getTableSize()
+        return (key) % self.getTableSize()
     def tableRehash(self):
         # Because we didn't store hash value, we calculate hash value for each node again.
         if(LOG): print("------------------------Start rehashing------------------------------")
@@ -171,37 +171,45 @@ class HashMap():
                     return traveler.data
                 traveler = traveler.next
 
-    # def computeTreeifyRatio(self):
+    def computeTreeifyRatio(self):
+        rootType = {"LinkedList":0, "RBTree": 0}
+        for root in self.hashTable:
+            if(isinstance(root, LLNode)):
+                rootType["LinkedList"] += 1
+            elif(isinstance(root, RBTree)):
+                rootType["RBTree"] += 1
+        return rootType
 
 
 
 if __name__ == '__main__':
+
+    insertNodeNum = 370103
+
     hashMap = HashMap()
-    
-    insertNodeNum = 500
     dataList = load_words(insertNodeNum)
     random.shuffle(dataList)
+
     t1 = time()
     for i in range(insertNodeNum):
-        linkedNode = LLNode(dataList[i]["id"], dataList[i]["word"])
-        # linkedNode = LLNode(i*100, i)
+        linkedNode = LLNode(dataList[i]["word"], dataList[i]["word"])
         hashMap.putValue(linkedNode)
-        # drawer = drawOneLinkedList(rootNode)
-        # drawer.draw()
-        t2 = time()
+    t2 = time()
     
     hashMap.printMap()
-    print('=====%========%==========%=========%=========%=======%========%=======')
-    print("End, totalElement: ",hashMap.totalElement)
-    print("End. HashTableSize: ",hashMap.getTableSize())
-    print("Time to construct map: ", t2-t1, "seconds.")
+    rootType = hashMap.computeTreeifyRatio()
+
     t3 = time()
     for element in dataList:
-        findKey = element["id"]
+        findKey = element["word"]
         data = hashMap.findElementInMap(findKey)
     t4 = time()
+
+    print('=====%========%==========%=========%=========%=======%========%=======')
+    print("Treeify threshold:", hashMap.TREEIFY_THRESHOLD)
+    print("Load factor:",hashMap.loadFactor)
+    print("End, totalElement: ",hashMap.totalElement)
+    print("End. HashTableSize: ",hashMap.getTableSize())
+    print(rootType["LinkedList"],"roots are Linked List, while",rootType["RBTree"],"are RBTree.")
+    print("Time to construct map: ", t2-t1, "seconds.")
     print("average searching time: {:.20f}".format((t4-t3)/insertNodeNum))
-    if(data != None):
-        print("Found key: ",findKey, ", value: ", data)
-    else:
-        print("Not Found key: ",findKey)
