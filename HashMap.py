@@ -4,6 +4,7 @@ import random
 from RBTree.RedBlackTree import RBTree
 from dataLoader.wordLoader import csvLoader, load_words
 from time import time 
+import matplotlib.pyplot as plt
 
 class LLNode():
     def __init__(self, key, data):
@@ -26,9 +27,9 @@ LOG = False
 
 class HashMap():
     TABLE_INITIAL_CAPACITY = 4
-    TREEIFY_THRESHOLD = 3
+    TREEIFY_THRESHOLD = 2
     UNTREEIFY_THRESHOLD = 6
-    loadFactor = 3
+    loadFactor = 10
     MIN_TREEIFY_CAPACITY = 64
     
     def __init__(self):
@@ -173,18 +174,48 @@ class HashMap():
 
     def computeTreeifyRatio(self):
         rootType = {"LinkedList":0, "RBTree": 0}
+        rootTypeNum = {}
         for root in self.hashTable:
+            cnt = 0
             if(isinstance(root, LLNode)):
                 rootType["LinkedList"] += 1
+                while(root!=None):
+                    cnt += 1
+                    root = root.next
             elif(isinstance(root, RBTree)):
                 rootType["RBTree"] += 1
-        return rootType
+                root.getAllTreeNodes(root.root)
+                cnt = len(root.allNodes)
+            if(not cnt in rootTypeNum):
+                rootTypeNum[cnt] = 1
+            else:
+                rootTypeNum[cnt] += 1
+        keys = rootTypeNum.keys()
+        keys = sorted(keys)
+        freq = [rootTypeNum[key] for key in keys]
+        return rootType, freq
 
-
-
+def drawHashTableComposition(hashMap):
+    x = range(hashMap.getTableSize())
+    y = []
+    for root in hashMap.hashTable:
+        rootType = None
+        cnt = 0
+        if(isinstance(root, LLNode)):
+            rootType = "LL"
+            while(root!=None):
+                cnt += 1
+                root = root.next
+        elif(isinstance(root, RBTree)):
+            rootType = "RBTree"
+            root.getAllTreeNodes(root.root)
+            cnt = len(root.allNodes)
+        y.append(cnt)
+    plt.scatter(x, y)        
+    plt.show()
 if __name__ == '__main__':
 
-    insertNodeNum = 370103
+    insertNodeNum = 37010
 
     hashMap = HashMap()
     dataList = load_words(insertNodeNum)
@@ -197,7 +228,7 @@ if __name__ == '__main__':
     t2 = time()
     
     hashMap.printMap()
-    rootType = hashMap.computeTreeifyRatio()
+    rootType, freq = hashMap.computeTreeifyRatio()
 
     t3 = time()
     for element in dataList:
@@ -211,5 +242,12 @@ if __name__ == '__main__':
     print("End, totalElement: ",hashMap.totalElement)
     print("End. HashTableSize: ",hashMap.getTableSize())
     print(rootType["LinkedList"],"roots are Linked List, while",rootType["RBTree"],"are RBTree.")
+    print("Length Frequency: ",end="")
+    for index, num in enumerate(freq):
+        print(index,":",num,end=" ")
+        if(index+1 == len(freq)):
+            print("",end="\n")
     print("Time to construct map: ", t2-t1, "seconds.")
     print("average searching time: {:.20f}".format((t4-t3)/insertNodeNum))
+
+    # drawHashTableComposition(hashMap)
