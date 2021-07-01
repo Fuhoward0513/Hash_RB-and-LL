@@ -51,13 +51,19 @@ class HashMap():
                 bucket = bucket.next
             print("NONE",end="\n")
         print("----------------------End printing hashTable---------------------")
+    def hashCode(self, key):
+        if(isinstance(key, str)):   
+            hashValue = self.hashCodeString(key)
+        elif(isinstance(key, int)):
+            hashValue = self.hashCodeInteger(key)
+        return hashValue
     def hashCodeString(self, key):
         hashValue = 0
         for char in key:
             hashValue = hashValue * 31 + ord((char))
         return hashValue % self.getTableSize()
     def hashCodeInteger(self, key):
-        return key % self.getTableSize()
+        return (key+random.randint(0, self.getTableSize())) % self.getTableSize()
     def tableRehash(self):
         # Because we didn't store hash value, we calculate hash value for each node again.
         if(LOG): print("------------------------Start rehashing------------------------------")
@@ -72,7 +78,8 @@ class HashMap():
                     traveler.getAllTreeNodes(traveler.root)
                     if(LOG): print("rehashing, the tree all nodes: ", traveler.allNodes)
                     for node in traveler.allNodes:
-                        rehashNodes.append(node)
+                        LLNode = self.Tree2LLNode(node)
+                        rehashNodes.append(LLNode)
                     break
                 rehashNodes.append(traveler)
                 traveler = traveler.next
@@ -87,7 +94,7 @@ class HashMap():
         if(LOG): print("------------------------End rehashing--------------------------------")
     def putValue(self, newNode):
         if(LOG): print('Hashing a node with key: \t\t',newNode.value)
-        hashValue = self.hashCodeInteger(newNode.value)
+        hashValue = self.hashCode(newNode.value)
         root = self.hashTable[hashValue]
         if(root == None): # empty space
             self.hashTable[hashValue] = newNode
@@ -145,9 +152,13 @@ class HashMap():
     def LL2TreeNode(self, LLNode):
         treeNode = TreeNode(key=LLNode.value, data=LLNode.data)
         return treeNode
+
+    def Tree2LLNode(self, TreeNode):
+        return LLNode(TreeNode.value, TreeNode.data)
+
     def findElementInMap(self, key):
-        if(LOG): print("Start finding data with key: ", key)
-        hashValue = self.hashCodeInteger(key)
+        if(LOG): print("Start finding data with key: ", key)  
+        hashValue = self.hashCode(key)
         findRoot = self.hashTable[hashValue]
         if(isinstance(findRoot, RBTree)):
             if(LOG): print("In treee!")
@@ -160,13 +171,16 @@ class HashMap():
                     return traveler.data
                 traveler = traveler.next
 
+    # def computeTreeifyRatio(self):
+
+
 
 if __name__ == '__main__':
     hashMap = HashMap()
     
-    insertNodeNum = 30000
+    insertNodeNum = 500
     dataList = load_words(insertNodeNum)
-    
+    random.shuffle(dataList)
     t1 = time()
     for i in range(insertNodeNum):
         linkedNode = LLNode(dataList[i]["id"], dataList[i]["word"])
@@ -175,15 +189,15 @@ if __name__ == '__main__':
         # drawer = drawOneLinkedList(rootNode)
         # drawer.draw()
         t2 = time()
+    
+    hashMap.printMap()
     print('=====%========%==========%=========%=========%=======%========%=======')
     print("End, totalElement: ",hashMap.totalElement)
     print("End. HashTableSize: ",hashMap.getTableSize())
     print("Time to construct map: ", t2-t1, "seconds.")
-    # hashMap.printMap()
-
     t3 = time()
-    for i in range(insertNodeNum):
-        findKey = i
+    for element in dataList:
+        findKey = element["id"]
         data = hashMap.findElementInMap(findKey)
     t4 = time()
     print("average searching time: {:.20f}".format((t4-t3)/insertNodeNum))

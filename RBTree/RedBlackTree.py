@@ -81,11 +81,11 @@ class RBTree():
 
     def insert(self, input_node):
         if(self.root==None):
-            print('insert:', input_node.value)
+            # print('insert:', input_node.value)
             self.root = TreeNode(input_node.value, input_node.data)
             self.root.color = "Black"
         else:
-            print('insert:', input_node.value)
+            # print('insert:', input_node.value)
             self._insert(self.root, input_node)
             
     def _insert(self, node, input_node):

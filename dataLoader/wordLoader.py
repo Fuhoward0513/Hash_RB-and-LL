@@ -29,11 +29,13 @@ def load_words(num):
                 break
             outputData.append({"id":index, "word":element})
         print(index, "data fetched.")
-    print(outputData)
+    # print(outputData)
     return outputData
 
 if __name__ == '__main__':
     # data = csvLoader(100000)
     # print(data)
-    load_words(10)
+    # load_words(10)
+    # Total 370102 items
+    data = load_words(10)
     
