@@ -27,14 +27,13 @@ LOG = False
 
 class HashMap():
     TABLE_INITIAL_CAPACITY = 4
-    TREEIFY_THRESHOLD = 2
-    UNTREEIFY_THRESHOLD = 6
-    loadFactor = 10
     MIN_TREEIFY_CAPACITY = 64
     
-    def __init__(self):
+    def __init__(self, loadFactor=0.7, TREEIFY_THRESHOLD=8):
         self.hashTable = [None] * HashMap.TABLE_INITIAL_CAPACITY
         self.totalElement = 0
+        self.loadFactor = loadFactor
+        self.TREEIFY_THRESHOLD = TREEIFY_THRESHOLD
     def getTableSize(self):
         return len(self.hashTable)
     def incrementTotal(self):
@@ -64,7 +63,7 @@ class HashMap():
             hashValue = hashValue * 31 + ord((char))
         return hashValue % self.getTableSize()
     def hashCodeInteger(self, key):
-        return (key) % self.getTableSize()
+        return (key+random.randint(0, self.getTableSize())) % self.getTableSize()
     def tableRehash(self):
         # Because we didn't store hash value, we calculate hash value for each node again.
         if(LOG): print("------------------------Start rehashing------------------------------")
@@ -119,7 +118,7 @@ class HashMap():
                         self.incrementTotal()
                         binCount += 1
                         if(LOG): print("Add node at position",binCount, " \tNo.", self.totalElement)
-                        if(binCount >= HashMap.TREEIFY_THRESHOLD):
+                        if(binCount >= self.TREEIFY_THRESHOLD):
                             if(LOG): print("Excess treeify_threshold, treeify.")
                             self.treeifyBin(hashValue)
                         break
@@ -130,7 +129,7 @@ class HashMap():
                     binCount += 1
                     root = root.next
 
-        threshold = self.getTableSize() * HashMap.loadFactor
+        threshold = self.getTableSize() * self.loadFactor
         if(self.totalElement > threshold):
             if(LOG): print("=================================Start Resizing. from ",self.getTableSize()," to ", 2*self.getTableSize()," because exceed threshold: ",threshold,"=============================")
             self.tableResize()
@@ -173,7 +172,7 @@ class HashMap():
                 traveler = traveler.next
 
     def computeTreeifyRatio(self):
-        rootType = {"LinkedList":0, "RBTree": 0}
+        rootType = {"LinkedList":0, "RBTree": 0, "Empty":0}
         rootTypeNum = {}
         for root in self.hashTable:
             cnt = 0
@@ -186,14 +185,13 @@ class HashMap():
                 rootType["RBTree"] += 1
                 root.getAllTreeNodes(root.root)
                 cnt = len(root.allNodes)
+            else:
+                rootType["Empty"] += 1
             if(not cnt in rootTypeNum):
                 rootTypeNum[cnt] = 1
             else:
                 rootTypeNum[cnt] += 1
-        keys = rootTypeNum.keys()
-        keys = sorted(keys)
-        freq = [rootTypeNum[key] for key in keys]
-        return rootType, freq
+        return rootType, rootTypeNum
 
 def drawHashTableComposition(hashMap):
     x = range(hashMap.getTableSize())
@@ -215,7 +213,7 @@ def drawHashTableComposition(hashMap):
     plt.show()
 if __name__ == '__main__':
 
-    insertNodeNum = 37010
+    insertNodeNum = 370100
 
     hashMap = HashMap()
     dataList = load_words(insertNodeNum)
@@ -227,8 +225,8 @@ if __name__ == '__main__':
         hashMap.putValue(linkedNode)
     t2 = time()
     
-    hashMap.printMap()
-    rootType, freq = hashMap.computeTreeifyRatio()
+    # hashMap.printMap()
+    rootType, rootTypeNum = hashMap.computeTreeifyRatio()
 
     t3 = time()
     for element in dataList:
@@ -241,13 +239,7 @@ if __name__ == '__main__':
     print("Load factor:",hashMap.loadFactor)
     print("End, totalElement: ",hashMap.totalElement)
     print("End. HashTableSize: ",hashMap.getTableSize())
-    print(rootType["LinkedList"],"roots are Linked List, while",rootType["RBTree"],"are RBTree.")
-    print("Length Frequency: ",end="")
-    for index, num in enumerate(freq):
-        print(index,":",num,end=" ")
-        if(index+1 == len(freq)):
-            print("",end="\n")
+    print(rootType["LinkedList"],"roots are Linked List,",rootType["RBTree"],"are RBTree, and",rootType["Empty"],"are empty bins.")
+    print("Length Frequency: ",rootTypeNum)
     print("Time to construct map: ", t2-t1, "seconds.")
     print("average searching time: {:.20f}".format((t4-t3)/insertNodeNum))
-
-    # drawHashTableComposition(hashMap)

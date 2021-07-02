@@ -27,10 +27,10 @@ def load_words(num):
             return
         outputData = []
         for index, element in enumerate(myData):
-            if(index >= num):
-                break
             outputData.append({"id":index, "word":element})
-        print(index, "data fetched.")
+            if(index+1 >= num):
+                break
+        print(index+1, "data fetched.")
     return outputData
 
 if __name__ == '__main__':
