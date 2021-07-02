@@ -9,8 +9,8 @@ import numpy as np
 import math
 
 
-def drawDistribution(loadFactor, drawing):
-    insertNodeNum = 370103
+def drawDistribution(nodeNum, loadFactor, drawing):
+    insertNodeNum = nodeNum
     hashMap = HashMap(loadFactor=loadFactor,TREEIFY_THRESHOLD=8)
     dataList = load_words(insertNodeNum)
     random.shuffle(dataList)
@@ -73,9 +73,9 @@ def drawDistribution(loadFactor, drawing):
         plt.legend()
         plt.show()
 
-    return expX, expP, normX, normY, poissonX, poissonY, Lambda
+    return expX, expP, normX, normY, poissonX, poissonY, Lambda, rootType
 
 
 if __name__ == '__main__':
-    drawDistribution(loadFactor=300, drawing=True)
+    drawDistribution(nodeNum=200000,loadFactor=300, drawing=True)
 

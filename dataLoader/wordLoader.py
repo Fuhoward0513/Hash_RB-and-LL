@@ -22,6 +22,7 @@ def load_words(num):
         myData = []
         for element in mySet:
             myData.append(element)
+        random.shuffle(myData)
         if(num > len(myData)): # 370103
             print("We only have ",len(myData)," elements!")
             return
