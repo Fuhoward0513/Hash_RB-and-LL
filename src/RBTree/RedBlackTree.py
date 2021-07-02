@@ -9,7 +9,6 @@ import argparse
 class TreeNode():
     def __init__(self, key, data):
         self.value = key
-        self.data = f"{self.value}"+"d" #data 自己改
         self.parent = None
         self.left_child = None
         self.right_child = None

@@ -2,7 +2,7 @@ import csv
 import random
 
 def csvLoader(num):
-    with open('./dataLoaderr/dictionary.csv', newline='') as csvfile:
+    with open('./src/dataLoaderr/dictionary.csv', newline='') as csvfile:
         rows = csv.reader(csvfile)
         mySet = set([row[0] for row in rows]) # filter the repeated element
         myData = []
@@ -17,7 +17,7 @@ def csvLoader(num):
         print(index, "data fetched.")
         return outputData
 def load_words(num):
-    with open('./dataLoader/words_alpha.txt') as word_file:
+    with open('./src/dataLoader/words_alpha.txt') as word_file:
         mySet = set(word_file.read().split())
         myData = []
         for element in mySet:

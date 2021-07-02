@@ -1,4 +1,4 @@
-from poissonDraw import drawDistribution
+from .poissonDraw import drawDistribution
 import matplotlib.pyplot as plt
 import pickle
 

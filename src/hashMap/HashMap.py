@@ -1,8 +1,8 @@
-from dataVisualizer.drawLinkedLists import drawLinkedLists
-from dataVisualizer.drawOneLinkedList import drawOneLinkedList
+from ..dataVisualizer.drawLinkedLists import drawLinkedLists
+from ..dataVisualizer.drawOneLinkedList import drawOneLinkedList
 import random
-from RBTree.RedBlackTree import RBTree
-from dataLoader.wordLoader import csvLoader, load_words
+from ..RBTree.RedBlackTree import RBTree, TreeNode
+from ..dataLoader.wordLoader import csvLoader, load_words
 from time import time 
 import matplotlib.pyplot as plt
 
@@ -11,17 +11,6 @@ class LLNode():
         self.value = key
         self.data = data
         self.next = None
-class TreeNode():
-    def __init__(self, key, data):
-        self.value = key
-        self.parent = None
-        self.left_child = None
-        self.right_child = None
-        self.color = 'Black'
-
-        self.prev = None
-        self.next = None
-        self.data = data
 
 LOG = False
 

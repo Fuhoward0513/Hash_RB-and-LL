@@ -1,5 +1,5 @@
-from HashMap import *
-from dataLoader.wordLoader import csvLoader, load_words
+from ..hashMap.HashMap import *
+from ..dataLoader.wordLoader import csvLoader, load_words
 import random
 from time import time 
 import matplotlib.pyplot as plt
@@ -17,7 +17,7 @@ In the same figure, we also plot
 2. normal distribution(with mu and variance both equal to the lambda in poisson distribution.) 
 '''
 
-def drawDistribution(nodeNum, loadFactor, drawing, TREEIFY_THRESHOLD):
+def drawDistribution(nodeNum, loadFactor, drawing, TREEIFY_THRESHOLD=8):
     insertNodeNum = nodeNum
     hashMap = HashMap(loadFactor=loadFactor,TREEIFY_THRESHOLD=TREEIFY_THRESHOLD)
     dataList = load_words(insertNodeNum)
