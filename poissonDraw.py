@@ -8,10 +8,18 @@ import scipy.stats as stats
 import numpy as np
 import math
 
+'''
+In "drawDistribution", we take nodeNum, loadFactor, TREEIFY_THRESHOLD as arguments. 
+Given these parameters, we can conduct a single time of experiment. 
+Then, for different length of bins, we sum up the number of bins. For example, {3:2834, ...} means there are 2834 bins that have 3 nodes within it.
+In the same figure, we also plot 
+1. poisson distribution(with lambda equal to the weighted average of experimental results)
+2. normal distribution(with mu and variance both equal to the lambda in poisson distribution.) 
+'''
 
-def drawDistribution(nodeNum, loadFactor, drawing):
+def drawDistribution(nodeNum, loadFactor, drawing, TREEIFY_THRESHOLD):
     insertNodeNum = nodeNum
-    hashMap = HashMap(loadFactor=loadFactor,TREEIFY_THRESHOLD=8)
+    hashMap = HashMap(loadFactor=loadFactor,TREEIFY_THRESHOLD=TREEIFY_THRESHOLD)
     dataList = load_words(insertNodeNum)
     random.shuffle(dataList)
 
@@ -60,14 +68,16 @@ def drawDistribution(nodeNum, loadFactor, drawing):
     ############### Poisson ################
     poissonX = []
     poissonY = []
-    # poissonX = np.arange(min(expX), max(expX), 0.1)
-    # poissonY = np.exp(-Lambda)*np.power(Lambda, poissonX)/factorial(poissonX)
+    if(nodeNum < 200):
+        poissonX = np.arange(min(expX), max(expX), 0.1)
+        poissonY = np.exp(-Lambda)*np.power(Lambda, poissonX)/factorial(poissonX)
     ############### Plot and Show ###############
     if (drawing == True):
+        plt.figure()
         plt.title("Number of bins that contain certain amounts of nodes")
         plt.xlabel("nodes in bin")
         plt.ylabel("Probability")
-        plt.bar(expX, expP, label='HashMap settings: load factor=%.2f, treeify threshold=%d' %(hashMap.loadFactor, hashMap.TREEIFY_THRESHOLD))
+        plt.bar(expX, expP, label='HashMap settings: load factor=%.2f' %(hashMap.loadFactor))
         plt.plot(normX, normY,'gs', label=r"Normal Distribution with $\mu$=%.2f, $\sigma$=%.2f"%(Lambda, math.sqrt(Lambda)))
         plt.plot(poissonX, poissonY, 'rs',label=r"Poisson Distribution with $\lambda$=%.2f"%Lambda)
         plt.legend()
@@ -77,5 +87,5 @@ def drawDistribution(nodeNum, loadFactor, drawing):
 
 
 if __name__ == '__main__':
-    drawDistribution(nodeNum=200000,loadFactor=300, drawing=True)
+    drawDistribution(nodeNum=200000,loadFactor=300, drawing=True,TREEIFY_THRESHOLD=8)
 
