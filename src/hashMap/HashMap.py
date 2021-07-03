@@ -52,7 +52,7 @@ class HashMap():
             hashValue = hashValue * 31 + ord((char))
         return hashValue % self.getTableSize()
     def hashCodeInteger(self, key):
-        return (key+random.randint(0, self.getTableSize())) % self.getTableSize()
+        return (key) % self.getTableSize()
     def tableRehash(self):
         # Because we didn't store hash value, we calculate hash value for each node again.
         if(LOG): print("------------------------Start rehashing------------------------------")
