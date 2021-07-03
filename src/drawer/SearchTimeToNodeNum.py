@@ -14,12 +14,12 @@ import matplotlib.pyplot as plt
 def drawTimeToSearch_N_Node(NodeNum):
     
     plt.figure()
-    plt.title("Time To Search N-Node(load Factor=100)")
+    plt.title("Time To Search N-Node(load Factor=300)")
     plt.xlabel("NodeNum")
     plt.ylabel("Time")
     plt.legend()
-    Load_factor = [0.75, 1.5, 3, 6]
-    Treeify_thershold = [10, 30, 60, 120]
+    # Load_factor = [0.75, 1.5, 3, 6]
+    Treeify_thershold = [1, 2, 4, 8]
     for TH in Treeify_thershold:
         t = []
         Node_cnt = []
@@ -30,7 +30,7 @@ def drawTimeToSearch_N_Node(NodeNum):
             random.shuffle(dataList)
             
             # insert N Nodes
-            hashMap = HashMap(loadFactor=100,TREEIFY_THRESHOLD=TH)
+            hashMap = HashMap(loadFactor=300,TREEIFY_THRESHOLD=TH)
             for k in range(i):
                 linkedNode = LLNode(dataList[k]["word"], dataList[k]["word"])
                 hashMap.putValue(linkedNode)
