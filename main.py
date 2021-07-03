@@ -14,5 +14,5 @@ from src.drawer.TimeToTreeifyTheshold import drawTreeifyThershold
 # drawTimeToConstructMap(10000)
 # drawTimeToSearch_N_Node(10000)
 # drawTimeToLoadFactor(10000, 300)
-# drawTreeifyThershold(10000)
+# drawTreeifyThershold(1000)
 
