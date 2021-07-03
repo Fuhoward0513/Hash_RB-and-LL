@@ -68,7 +68,7 @@ def drawDistribution(nodeNum, loadFactor, drawing, TREEIFY_THRESHOLD=8):
     ############### Poisson ################
     poissonX = []
     poissonY = []
-    if(nodeNum < 200):
+    if(nodeNum <= 50000):
         poissonX = np.arange(min(expX), max(expX), 0.1)
         poissonY = np.exp(-Lambda)*np.power(Lambda, poissonX)/factorial(poissonX)
     ############### Plot and Show ###############
@@ -77,9 +77,9 @@ def drawDistribution(nodeNum, loadFactor, drawing, TREEIFY_THRESHOLD=8):
         plt.title("Number of bins that contain certain amounts of nodes")
         plt.xlabel("nodes in bin")
         plt.ylabel("Probability")
-        plt.bar(expX, expP, label='HashMap settings: load factor=%.2f' %(hashMap.loadFactor))
-        plt.plot(normX, normY,'gs', label=r"Normal Distribution with $\mu$=%.2f, $\sigma$=%.2f"%(Lambda, math.sqrt(Lambda)))
-        plt.plot(poissonX, poissonY, 'rs',label=r"Poisson Distribution with $\lambda$=%.2f"%Lambda)
+        plt.bar(expX, expP,label='HashMap settings: load factor=%.2f' %(hashMap.loadFactor))
+        # plt.plot(normX, normY, "g-",linewidth=4,label=r"Normal Distribution with $\mu$=%.2f, $\sigma$=%.2f"%(Lambda, math.sqrt(Lambda)))
+        plt.plot(poissonX, poissonY,"r-",linewidth=4, label=r"Poisson Distribution with $\lambda$=%.2f"%Lambda)
         plt.legend()
         plt.show()
 

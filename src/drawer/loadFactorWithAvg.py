@@ -12,7 +12,7 @@ def drawLFandLambda():
     LFX = []
     LambdaY = []
     for LF in range(1, 400, 5):
-        expX, expP, normX, normY, poissonX, poissonY, Lambda, rootType = drawDistribution(nodeNum=200000,loadFactor=LF, drawing=False,TREEIFY_THRESHOLD=8)
+        expX, expP, normX, normY, poissonX, poissonY, Lambda, rootType = drawDistribution(nodeNum=10000,loadFactor=LF, drawing=False,TREEIFY_THRESHOLD=8)
         LFX.append(LF)
         LambdaY.append(Lambda)
 
