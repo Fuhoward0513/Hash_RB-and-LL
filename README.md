@@ -10,9 +10,12 @@
 
 
 
-# Deep Into HashMap
+# 深入探討jdk1.8版本HashMap機制之效能分析
 
-:bulb: 深入探討在jdk1.8版本中的HashMap，其hash collision機制：在bin中擴展成Linked List或Red Black Tree。在閱讀過官方的原始碼後，**我們好奇是否可以有更好的參數設定來使效能更好？** 這是幾乎沒有前人做過的，於是我們仿照java的source code使用python實作完全同樣功能的HashMap，接著使用370,000個英文單字作為資料集map進hash table中，同時測試與jdk1.8官方設定中不同的參數，以理論和實驗數據分析HashMap效能。
+:star: java的HashMap處理hash collision的機制原為在衝突的bucket中添加Linked List，但在jdk1.8改版後，若Linked List太長，則改為使用Red Black Tree。然而，在這樣的機制下HashMap的效能真的變好了嗎？這是幾乎沒有前人懷疑過的，但卻相當重要的，因為牽扯到的人所有HashMap使用者的效能。我們很好奇於是展開了一系列的研究，最後發現了許多有趣的東西，準備與你們分享！
+
+
+:fire: 我們仿照java的source code使用python自己實作完全同樣功能的HashMap，在本專題中，我們使用370,000個英文單字作為資料集，並對HashMap進行一系列理論與實驗數據分析，在實驗結果裡意外發現許多好玩的事情，下面我們將帶您深入java HashMap的世界，期望您閱讀完後受益良多。
 <br><br>
 
 ## :orange_book: Introduction & More about HashMap
@@ -44,7 +47,6 @@
 
 
 
-## Table of Contents
 
 ## :hammer: Data Structure Implementation
 ### :clipboard: HashMap Implementation
@@ -52,7 +54,9 @@
 ![](https://i.imgur.com/FB0iMd0.png)
 然而在我們實作的HashMap中，還是有幾點與官方不同:
 1. 我們並未設置`UNTREEIFY_THRESHOLD`，也就是說，在table進行resize的時候，若bucket(table中的元素)中是RB Tree，我們直接將Tree中的所有節點pop出來，重新對它們進行hash分配。反之，官方則是有特殊的`split()`來處理resize時RB Tree的修剪。
+
 2. 我們並未在節點儲存`hash`屬性，所以在table resize的時候，我們使用每個節點的`key`屬性重新計算hash value。反之，官方則有這個屬性，方便其rehash時不用重新計算hash value，只要將其分配原地或2倍長度後的bucket的位置即可(因為resize是將table直接double size，故節點要嘛是在同位置，要嘛是兩倍index後的位置)。
+
 3. 我們額外建立一個Red Black Tree的class建立實體放在table的bucket裡。官方則只是在HashMap程式碼中嵌入TreeNode和實作RB Tree的主要運算函式。
 
 依照jdk1.8的邏輯，our `putValue()` method in class `HashMap`:
@@ -89,7 +93,7 @@
         if(self.totalElement > threshold):
             self.tableResize()
 ```
-除此之外，在本次資料集中我們使用的是英文單字，我們用作其單字本身作為key代入hash function中，我們所使用的hash function為：
+:ab: 除此之外，在本次資料集中我們使用的是英文單字，我們用作其單字本身作為key代入hash function中，我們所使用的hash function為：
 
 ***hash value*** $=s[0]\cdot31^{n-1} + s[1]\cdot31^{n-2} + \cdots + s[n-1]$
 
@@ -106,13 +110,15 @@ def hashCodeString(self, key):
 這次我們紅黑樹並未使用 Python 提供的套件，而是使用手刻的方式。
 因應 HashMap 這次寫了 `search()`、`insert()`、`delete()`三種函式，但`delete()` 在最後的實作中並未使用到。使用時機為當bucket裡面的Linked List長度超過`TREEIFY_THRESHOLD`時，將Linked List內的節點一一`insert`進新建立的RB Tree實體。當使用者在查找元素的時候，如果發現在table上對應的hash value的bin的根節點是RB Tree的話，啟用`search`，達到O(logN)的查找速率。
 
-至此我們已經準備好了實驗所需的工具，接下來只要將data set一個一個map進table中，table會根據參數`load factor`, `TREEIFY_THRESHOLD`決定何時該resize？以及何時該將過長的Linked List轉換成RB Tree？所以下面我們設想了多種情況進行實驗和理論分析，除了探討「load factor對bucket內平均長度的影響」、「load factor對RB Tree轉換率的影響」外，我們還會著重觀察在不同參數設定下的HashMap，其「建立map所需時間」以及「search item所需時間」來進行分析。
+:triangular_flag_on_post: 至此我們已經準備好了實驗所需的工具，接下來只要將data set一個一個map進table中，table會根據參數`load factor`, `TREEIFY_THRESHOLD`決定何時該resize？以及何時該將過長的Linked List轉換成RB Tree？所以下面我們設想了多種情況進行實驗和理論分析，除了探討「load factor對bucket內平均長度的影響」、「load factor對RB Tree轉換率的影響」外，我們還會著重觀察在不同參數設定下的HashMap，其「建立map所需時間」以及「search item所需時間」來進行分析。
 
 
 
-## :bar_chart: Experiments
+## :bar_chart: Experiments & Discussion
 
-### Probability of Hash Collision
+### 	:mag_right: Probability of Hash Collision
+> :bulb: Note: 在實驗開始前，會有一些先備知識以及我們共同的語言需要您先理解，希望您能好好閱讀完，非常感謝！
+
 我們可以看到java中的HashMap在達一定填充量時有自動擴容的功能，也就是說，table會永遠維持一定比例的填充量，這個比例由`load factor`控制。回想HashMap擴容的機制為
 > 當table中的總元素數量大於`table size * load factor`時，table會double sized.
 
@@ -120,7 +126,7 @@ def hashCodeString(self, key):
 
 然而對我們來說，hash collision的碰撞機率其實相當重要，為什麼呢？因為若碰撞機率大，bucket後面所串接的元素也會越多，那麼`TREEIFY_THRESHOLD`的設置也就相當重要。倘若今天`load factor`很小，導致碰撞機率極小，結果bucket後面只有1~2個元素，但是`TREEIFY_TRESHOLD`卻設為10，那這樣配置下的treeify機制形同虛設。換句話說，如果我們能知道`load factor`配置下的碰撞機率，我們就能大概知道bucket後面串接了多少元素，也就大概知道`TREEIFY_THRESHOLD`要設置為多少才有機會產生treeify行為。
 
-所以問題來了，我們該怎麼從`load factor`得知碰撞機率？在回答這個問題之前，我們直接進行實驗，下面我們在給定的load factor下，建立一個HashMap，`TREEIFY_THRESHOLD`在這裡並不重要，因為我們只是要觀察bucket後面串接的元素數量，不管其為Linked List或Red Black Tree。接著直接往HashMap插入370,000筆英文單字，最後統計table中bucket串接元素數量(以下統稱bucket長度)的個數，舉例來說：bucket長度為100的有53個，長度為105的有46個，長度為87的有33個…，最後將其表示為機率的形式，即可得出一類似機率密度函數的圖：
+:question: 所以問題來了，我們該怎麼從`load factor`得知碰撞機率？在回答這個問題之前，我們直接進行實驗，下面我們在給定的load factor下，建立一個HashMap，`TREEIFY_THRESHOLD`在這裡並不重要，因為我們只是要觀察bucket後面串接的元素數量，不管其為Linked List或Red Black Tree。接著直接往HashMap插入370,000筆英文單字，最後統計table中bucket串接元素數量(以下統稱bucket長度)的個數，舉例來說：bucket長度為100的有53個，長度為105的有46個，長度為87的有33個…，最後將其表示為機率的形式，即可得出一類似機率密度函數的圖：
 >`input nodes`: 370,000<br>
 >`load factor`: 10
 > ![](https://i.imgur.com/Xg9hs1J.png)
@@ -143,26 +149,52 @@ nodes in bins follows a Poisson distribution (http://en.wikipedia.org/wiki/Poiss
 >8:    0.00000006<br>
 >more: less than 1 in ten million<br>
 
-簡單來說，bucket後面串接的元素數量其實可以用`Poisson Distribution`來描述，在這裡就不詳說Poisson Distribution的原理。但確實如此，為了驗證這個機率分布是否是Poisson Distribution，我們重新做一次實驗，因為在Poisson Distribution中我們需要計算factorial，故這次僅插入50,000個英文單字，接著將實驗數據結果做加權平均，得到：
+簡單來說，bucket後面串接的元素數量其實可以用`Poisson Distribution`來描述，在這裡就不詳說Poisson Distribution的原理。但此情境確實符合Poisson Distribution的情境，為了驗證這個機率分布是否是Poisson Distribution，我們重新做一次實驗，因為在Poisson Distribution中我們需要計算factorial，故這次僅插入50,000個英文單字，接著將實驗結果的bucket內元素數量做加權平均，得到：
 >Experimental weighted average of 'nodes in bins': 6.103515625<br>
 
-將這個值作為Poission Distribution $P\left( x \right) = \frac{{e^{ - \lambda } \lambda ^x }}{{x!}}$ 中的$\lambda$，我們將之繪在同張圖上，可得：
+將這個值作為Poission Distribution $P\left( x \right) = \frac{{e^{ - \lambda } \lambda ^x }}{{x!}}$ 中的$\lambda$ (Possion Distribution中的peak所在的x值)，我們將之繪在同張圖上，可得：
 >`input nodes`: 50,000<br>
 >`load factor`: 10 <br>
 ![](https://i.imgur.com/RIJqLVn.png)
 
 奇蹟似地吻合了！
 
+這個結果其實給我們巨大的幫助。我們有以下兩個結論：
+1. Poisson Distribution中的$\lambda$可以作為我們實驗結果中bucket串接的元素平均數量的期望值
+2. $\lambda$本身的意義可以解讀為hash collision發生的期望值
 
-### Time to Construct HashMap
+綜合以上兩點，我們可以推論出：
+>:heavy_check_mark: hash collision的機率 = bucket串接元素的平均數量
+
+這個式子乍看下非常直觀，但我們認為其有價值的地方在於HashMap是會不斷進行size的變動的(依據`load factor`的不同，resize的頻率也不同)，且其bucket中元素的分布也會不停分散變動，在這樣動態的情境下，元素平均數量還能趨近於穩定的分布，甚至，不受`load factor`所影響(可見下圖不同`load factor`的實驗)！我們認為相當有趣。
+
+![](https://i.imgur.com/ivxwteq.png)
+
+
+### 	:mag_right: Load Factor & Probability of Hash Collision $\lambda$
+
+:bulb: 在上一節我們看到bucket中元素數量的分布成Poisson Distribution，且元素數量的平均值可以做為Poisson Distribution中的$\lambda$ (其peak所在的x值)，可視為hash collision的機率。然而，我們卻還沒解答這個$\lambda$與`load factor`的關係，在這一章節我們將來討論這個問題。
+
+前面我們已經討論過，`load factor`應與$\lambda$ (你可以視為碰撞機率，或bucket內平均元素數量)為正相關。從上圖也能看出來，隨著`load factor`越來越大，$\lambda$(Poisson Distribution的peak所在x值)也越大，但尚未看出明顯的關係，於是我們建立多個HashMap，每次都插入10,000個英文單字，每次都記錄其`load factor`與$\lambda$，將之繪在同張圖上，可得$\lambda$與`load factor`關係圖：
+
+![](https://i.imgur.com/ImcqfHE.png)
+
+我們可以從圖中直接觀察出來，$\lambda$與`load factor` 同時擁有線性和步階的關係。我們知道`load factor`越大，越不容易resize。此結果相當合理，在`load factor`跨越一個階段後，HashMap沒有發生resize，故累積了相較之下兩倍的元素在bucket裡面，元素平均數量兩倍，$\lambda$也因此兩倍。
+
+:heavy_check_mark: 到此總算解決了我們一開始問的問題：
+>能不能從`load factor`就大概知道bucket內元素長度為何，我們就能知道該將`TREEIFY_THRESHOLD`設為多少。
+>
+儘管我們沒有得到明確的equation。但我們可以用上圖做為查表工具，查出對應load factor的元素平均長度，著實夠用了。因此，在之後的實驗中，我們會加入TREEIFY_THRESHOLD的變因進去，情況會變得更複雜，而為了不要讓HashMap裡全是Linked List或全是RB Tree，我們會先參考對應HashMap的$\lambda$為多少，再將`TREEIFY_THRESHOLD`設為附近範圍的值，以便我們做「HashMap裡同時有Linked List以及RB Tree」情況的分析。
+
+
+### 	:mag_right: Time to Construct HashMap
 #### (1) Load Fator
-![](https://i.imgur.com/PatosmL.png =455x300)
 
 `load factor` 是影響 Construct HashMap 一個重要變數之一，因為當 HashMap 內元素數量大於 table_size* `load factor`時 HashMap 會進行resize(table_size變為原本的2倍)，因此可以知道當 `load factor` 越小時 resize 的頻率會上升，因此 index collision 的機率會下降， HashMap 每個 bucket 內所串聯的元素數量會相少，因此整個 HashMap 的結構會由較多的 Linked list 所組成。
 
 相反的，當 `load factor` 越大時 resize 的頻率會下降，因此 index collision 的機率會上升， HashMap 每個 bucket 內所串聯的元素數量會相對較多，整個 HashMap 的結構可能會由較多的 RB Tree 所組成。
 
-:bulb:`Note: TREEIFY_THRESHOLD會影響一個bucket裡面元素是為Linked List或RB Tree的機率，所以在這個實驗中我們把它設為定值，如此便可以有「當串聯元素越多，越有可能會RB Tree」的結論，以利我們做接下來的分析。關於TREEIFY_THRESHOLD更詳細的分析可見下節。`
+:bulb:`Note: TREEIFY_THRESHOLD會影響一個bucket裡面元素是為Linked List或RB Tree的機率，所以在這個實驗中我們把它設為定值，如此便可以有「當串聯元素越多，越有可能有RB Tree」的結論，以利我們做接下來的分析。關於TREEIFY_THRESHOLD更詳細的分析可見下節。`
 
 而由時間複雜度來看的話:
 
@@ -177,6 +209,11 @@ nodes in bins follows a Poisson distribution (http://en.wikipedia.org/wiki/Poiss
 
 由上圖可以發現確實當要創建一個越大的 HashMap ，`load factor`越大所需要的時間越多，也因此證明了上面所述的猜測。
 
+然而，在這樣的配置下，我們想確認不同的`load factor`、`node num`，會構建出怎樣的table建構，換句話說，有多少bucket是Linked List，多少是Reb Black Tree？於是我們繪出與上圖很類似的圖(`TREEIFY_THRESHOLD`同為4)，只有縱軸從時間改成「RBTree與Linked List出現的數量比例」，越大代表紅黑樹的比例越多：
+
+![](https://i.imgur.com/phsLjzm.png)
+
+這張圖相當有趣，首先，在任何x(InsertNodeNum)都有「`load factor`越大，紅黑樹越多」，符合我們上述的猜測，且成長曲縣是凹向上，這個部分相當有趣但我們還沒深究其原因。另外我們可以看到單一`load factor`都會有不連續的斷點。這些斷點合理推論是出現在HashMap Resize的時候。有趣的是，在這裡不同顏色的曲線會接上彼此的斷點，合理推論原因是因為這裡的`load factor`皆是2倍成長(0.75, 1.5, 3, 6)，故才會有這樣剛好有趣的現象。
 #### (2) Treeify Threshold
 `TREEIFY_THRESHOLD`也是影響 Construct HashMap 一個重要變數之一，當 bucket 內的 linked List 長度大於 `TREEIFY_THRESHOLD`時，會進行 `Treeify()` 將 bucket 內元素由 Linked List 結構轉為 RB Tree 結構。
 
@@ -190,8 +227,93 @@ nodes in bins follows a Poisson distribution (http://en.wikipedia.org/wiki/Poiss
 
 由上圖可以發現確實當要創建一個越大的 HashMap ，當`TREEIFY_THRESHOLD`越小所需要的時間越多，也因此證明了上面所述的猜測。
 
-### Average Searching Time
-一個 HashMap 的 Searching Time
+### :mag_right: Average Searching Time
+HashMap 的 Searching Time 的效率與整個 HashMap 的結構有很大的關係，由上述簡介可以知道 HashMap 是由 Linked List 和 RB TREE 結構組成的，因此 HashMap 的結構可以大致分為三類:
+1. bucket全為Linked List
+2. bucket全為RB TREE
+3. bucket有 Linked List 以及 RB TREE
+
+若以時間複雜度來看:
+1. Linked List Searching in HashMap is O(N)
+2. RB TREE Searching in HashMap is O(logN)
+3. (Linked List + RB TREE) in HashMap Time is O(N)
+
+由上面的時間複雜度來看，我們可以推知當table全為 RB TREE 時，HashMap的 Searching Time 的效率應該為最高的，而 Linked List 和 (Linked List + RB TREE) 效率應該是差不多的，但可能 (Linked List + RB TREE)會稍微好一點點。
+
+因此為了驗證我們的想法，我們希望藉由調整決定 HashMap 結構的參數: `load factor`和`TREEIFY_THRESHOLD` ，找出 Linked List、RB TREE、(Linked List + RB TREE)三種不同結構的 HashMap，並讓他們搜尋一樣的字典(10000個單字)來比較三者之間 Searching Time 效率的差別。
+
+#### (1) 實驗一:
+我一開始的做法是先給定一個`load factor`，接著我會選定 4 個不同`TREEIFY_THRESHOLD`來產生出 4 種不同的 HashMap 結構，分別搜尋100, 200, 300,..., 10000個單字，並將其平均的搜尋時間與搜尋字數做成圖。
+
+我做了四次測試，`load factor`分別設置為: 1、10、100、300，而每次測試 4 個`TREEIFY_THRESHOLD`皆為: 1、2、4、8，最後我得到了下面四張結果圖:
+
+![](https://i.imgur.com/f0wVrTB.jpg)
+
+
+由`load factor`=1、10 可以發現，其實四種結構的 Average Searching Time 是差不多的，幾乎是互相重疊，而到`load factor`=100、300 可以發現四種結構隨著搜尋資料變多，Average Searching Time有上下震盪的情形產生，但趨勢依然相同。
+
+
+因此我們將插入10000個單字時，`load factor` 相對於 HashMap 裡的平均元素長度: λ 作圖(如下圖)，發現我們設置的`load factor`=10、100、300 所對應的 λ值都大於我們所設置的`TREEIFY_THRESHOLD`(=1、2、4、8)，<br>
+
+:bangbang:因此推知我們上面做的四次測試的HashMap 結構幾乎皆為 RB TREE	:bangbang:
+也因此四種不同`TREEIFY_THRESHOLD`計算出的 Average Searching Time 幾乎是重疊的。
+
+而 `load factor`=100、300 在搜尋越多單字時 Average Searching Time 有上下震盪的現象，若由時間複雜度來看，RB TREE Search in HashMap is O(logN)，若`load factor` 越大時，擴容頻率會降低，因此 index collision 的頻率就會變高，bucket 內的元素長度會變大，也就是 N 會變大，Searching 所花費的時間會增加。因此當隨著搜尋單字量越大，Average Searching Time 也會隨著增加。
+
+但當 HashMap 內的元素數量大於 `load factor`*table_size，會進行擴容， table_size 會變為原先的 2 倍，並將所有元素重新hash進 HashMap內，因此原先的 RB TREE 結構會被改變，且理想狀況下 lamda會縮小，所以 Average Searching Time 下降，最終往復發生產生上下震盪的情況。
+![](https://i.imgur.com/E895g1J.jpg)
+
+
+#### (2) 實驗二:
+鑒於上次 HashMap 的結構未有明顯的差異，這次我依照 λ 與 `load factor` 圖來挑選我的`load factor`與`TREEIFY_THRESHOLD`:
+選擇 `load factor` 後，參照它所對應的 λ值、以及該 λ值上下各取一個值，共三個值作為我的`TREEIFY_THRESHOLD`。
+
+![](https://i.imgur.com/yGmNXcf.png)
+
+在我們的猜測中，三個`TREEIFY_THRESHOLD`值分別會對應以下結構:
+1. `TREEIFY_THRESHOLD` = λ: 因為`TREEIFY_THRESHOLD`剛好在 λ 附近，因此他高機率會是 (Linked List + RB TREE) 的結構。
+2. `TREEIFY_THRESHOLD` > λ: 因為`TREEIFY_THRESHOLD`大於 λ 附近，因此該 HashMap Treeify的機率較低，因此此結構高機率會是全為 Linked List 的結構。
+3. `TREEIFY_THRESHOLD` < λ: 因為`TREEIFY_THRESHOLD`小於 λ 附近，因此該 HashMap Treeify的機率較高，因此此結構高機率會是全為 RB TREE 的結構。
+
+接著我們用上述方法做了三組測試: 
+
+a. `load factor`=50, `TREEIFY_THRESHOLD`=20、40、80 (因由上圖看出`load factor`=50對應$\lambda$=40)
+
+![](https://i.imgur.com/jBKDaVn.png)
+
+b. `load factor`=100, `TREEIFY_THRESHOLD`=40、80、120 (因由上圖看出`load factor`=100對應$\lambda$=80)
+
+![](https://i.imgur.com/cSgtdrG.png)
+
+c. `load factor`=150, `TREEIFY_THRESHOLD`=80、160、240 (因由上圖看出`load factor`=150對應$\lambda$=160)
+
+![](https://i.imgur.com/vKIG5Ec.png)
+
+由上面三個結果可以清楚看出，當`TREEIFY_THRESHOLD` > λ 時，Average Searching Time 的效率明顯是比 `TREEIFY_THRESHOLD` = λ 和`TREEIFY_THRESHOLD` < λ 時還要來的好的。
+
+並且可以發現當`TREEIFY_THRESHOLD` = λ 和`TREEIFY_THRESHOLD` < λ 時，它們的 Average Searching Time 也是相較靠近的，但`TREEIFY_THRESHOLD` = λ 的效率依然會比 `TREEIFY_THRESHOLD` < λ的情況下還要好一點。
+
+因此這個測試符合我們的預期:
+#### 資料結構:
+1. `TREEIFY_THRESHOLD` = λ: (Linked List + RB TREE) 的結構。
+2. `TREEIFY_THRESHOLD` > λ:  Linked List 的結構。
+3. `TREEIFY_THRESHOLD` < λ:  RB TREE 的結構。
+
+#### 時間複雜度:
+1. `TREEIFY_THRESHOLD` = λ: O(N) + O(logN) = O(N)
+2. `TREEIFY_THRESHOLD` > λ: O(N)
+3. `TREEIFY_THRESHOLD` < λ: O(logN)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -202,366 +324,28 @@ nodes in bins follows a Poisson distribution (http://en.wikipedia.org/wiki/Poiss
 
 
 
-## :book: Discussion
 ## :bulb: Conclusion
 
-## :bulb: What is My-sweety?
-It's a productivity app built for lazybones and those who suffer from procrastination. Users only need to tell Sweety two things:<br>
-<b>
-<br>:large_orange_diamond:1. What are your to-do events? (including deadline, priority, total needed time, etc.)
-<br>:large_orange_diamond:2. What is your daily available time in a week?
-
-</b>
-
-With these information, our scheduling algorithm will arrange your segmented events to different days optimally.
-In addition, we also provide progress and diligence analysis so that you can clearly see what you've done so far.
-
-<br>
-
-## :date: Why My-sweety ?
-
-We've seen lots of productivity apps with calendar and todo-list functions. However, it's rare to find apps that can do auto-scheduling. Our goal is, by helping users schedule the events optimally in advance, <b>to force them to be aware of the total amounts of undone tasks, so that they won't misestimate the remaining time to work hard. </b> 
-<br><br>
-Also, with all stuffs and statistics displayed in clear chart and graph, users get to evaluate their own performances.
-So we'll confidently say these are the advantages of our app:
-<b>
-
-:heavy_check_mark: Optimal Scheduling <br>
-:heavy_check_mark: Schedule Visualization <br>
-:heavy_check_mark: Workloads Clearly Showed <br>
-:heavy_check_mark: Progress Evaluation and Supervision <br>
-</b>
-
-<br>
-
-## :hammer: Packages/Tools for building My-sweety
-In this app, we come up with functions and ideas by ourselves. We also develop our own scheduling algorithm. But for the css style, we benefit a lot from open source. For example, `nivo` provides a wonderful chart/graph, and `mixamo` gives us vigorous 3D model and animations. Last but not least, Material UI is also a big helper. Check out all the packages and tools we've used:
-+ Frontend
-  - ReactJS
-  - React Router
-  - Three
-  - React Three Fiber
-  - React Three Drei
-  - React Draggable
-  - React Icons
-  - Material UI
-  - Axios
-  - Jwt Decode
-  - [nivo](https://nivo.rocks/)
-  - [mixamo](https://www.mixamo.com/) (with [blender](https://www.blender.org/) & [gltfjsx](https://github.com/pmndrs/gltfjsx))
-+ Backend
-  - Express
-  - nodemon
-  - cors
-  - jwt
-  - mongoose
-  - bcrypt
-  - babel
-  - mongoDB
 
 
 
-# Getting Started
-## Installation
-1. **Clone the repository**
-    ```shell=
-    git clone https://github.com/Eric8808/wp1092.git
-    ```
-    ##### _:bulb:<font color=#F00078>The project is located at </font><font color=#A23400>`wp1092/final/my-sweety`</font>_
-2. **Install node.js**  (If you have installed node.js, you can skip the step.) 
-    * download from https://nodejs.org/en/
-    * version "14.17.1" has been verified working fine.
+## Contribution & 專題結論
+:bulb: 在本次專題中，從題目的發想、資料結構實作、想各種不同情況的實驗、做數據分析、結果與理論分析等等都是由我們自己討論、腦力激盪出來的。對於其他網站的參考最多僅在HashMap原始碼解釋。對於此專題主要有下列2個結論：
 
-3. **Install nvm**  (If you have installed nvm, you can skip the step.)
-    * download from https://github.com/coreybutler/nvm-windows/releases/download/1.1.7/nvm-setup.zip
-    * installation
-    ```shell=
-    nvm install 10.16.0
-    nvm use 10.16.0
-    ```
-4. **Install yarn**  (If you have installed yarn, you can skip the step.)
-    ```shell=
-    npm install --global yarn
-    ```
-5. **Install the dependencies for the project**
-    > go to the project directory (wp1092/final/my-sweety)
-    ```shell=
-    cd frontend
-    yarn install
-    ```
-    ```shell=
-    cd ../backend
-    yarn install
-    ```
+1. :large_orange_diamond: 我們都認為這是不錯且重要的題目，幾乎沒有人做這樣的研究(也許真的是太枯燥了)，大部分研究java HashMap都只是在做原始碼解釋，沒有像我們對其參數設定做深入的理論研究、繪圖等等。儘管我們不是做有趣的生活化的主題，但在某種層面上我想我們應該還算「有創意」，況且還算做出有點結果，應該能算對開源有些貢獻。
 
-6. **Start the project**
-    > go to the project directory (wp1092/final/my-sweety)
-    * open one terminal
-    ```shell=
-    yarn server
-    ```
-    :bulb:`note: We have prepared .env file for you, so you can directly run the server to connect to our mongoDB.`
-    * open another terminal
-    ```shell=
-    yarn start
-    ```
+    我們有看到不少人對java HashMap的這部分帶有疑問，尤其是Poisson Distribution的部分，難過的是，看到他們在網路上發文，卻沒有人幫他們解惑。經過這次專題研究，我們很希望能將這篇文章貼在解答下方，一定能讓他們滿意。
 
-## Tutorial
-If you haven't watched our demo video, go watch it and you'll know how easy to use our app:
->https://youtu.be/QRcVlVdssIo 
-<br>
+2. :large_orange_diamond: 我們一致認為這題目相當困難，其一是較少先人的相關參考資料。其二是其牽扯到的變因太多，要同時顧慮到這麼多種可能，又要將結果繪製在2D圖上，很看重我們的選擇參數去做實驗的能力。
 
-Alternatively, the following tutorial can help you navigate through our app:
-<br>
-Let's get started!
-
-After running `yarn server` and `yarn start` in the project directory, if everything works fine, you'll see a home page like this. Then, simply click the phone button in the top center to continue.
-![](https://i.imgur.com/YfLiNRK.png)
-
-### Login Page
-![](https://i.imgur.com/xgTacG1.png)
-* Sign in/up your own account 
-<br>(check out the author of the css style: https://www.florin-pop.com/)
-<br>:bulb:`note: When signing up, since we are letting everyone to use our mongoDB right now, the username you typed may have been used. In such situation, please use another username to sign up.`
-### Main Page
-#### :calendar: Schedule Mode
-![](https://i.imgur.com/Ahr9W6D.png)
-#### 1. Adjust your daily available time.
-Change the number under the calender.
-#### 2. Add the tasks.
-Press the `"Add"` button on the top to add a task in the TODO list. And you need to give some information about the task.
-* Task name  
-* Priority : `the order we schedule the task for you`
-* Total time : `the time you need to complete the task`
-* Separate : `the number of segments you want to break the task into` 
-* Deadline  
-
-:bulb:<b>note: please make sure </b>`Separate` <b>divides</b> `Total time`.
-
-(You can add multiple tasks in the TODO list.)
-#### 3. Schedule
-Press the `"Schedule"` button. And we will schedule all the tasks in the TODO list. Your tasks will be moved to the "Scheduled List".
-
----
-
-#### Follow the steps 1~3 above, your schedule will be filled. Next, you can adjust the schedule.
-![](https://i.imgur.com/Ia2kZt6.png)
-* You can switch to another week using the arrows next to the dates.
-* If you have completed any task, you can click it in the schedule and click ``"COMPLETED"`` in the pop up dialog. This will turn the task color into green.
-* You can also remove the task by clicking it and click ``"REMOVE"``. 
-
-<img src="https://i.imgur.com/TIS6JAt.png" width=70%>
-
-* Click the tasks in the TODO/Scheduled list to show the information about it.
-* The little boxes in the scheduled list show the rate of completion.  
-(The green ones mean `completed`, and the red ones mean `uncompleted`)  
-#### :zap: Additional feature:  If you didn't complete all tasks today, the undone tasks will be moved to the TODO list when you login tomorrow. At that time, feel free to schedule them again.  
-
----
-
-#### :chart_with_upwards_trend: Evaluation mode
-After adding several tasks and completing several segments in the schedule. Let's see how diligent you are this week and how far you've moved forward!
-
-By clicking the mode-switching button in the bottom left, we can enter `Evaluation Mode`.
-![](https://i.imgur.com/jIUnJ2l.png)
-
-Then you'll see a dashboard composed of several charts in the page, like this:
-![](https://i.imgur.com/SQ4gsJW.png)
-In this page, feel free to browse and check your personal statistics. More specifically, you'll find 3 main components here:
-
-:large_blue_diamond: Scheduled list composition (top left)<br>
-:large_blue_diamond: Total completed rate (top right)<br>
-:large_blue_diamond: Plot of `Available Time` and `Completed segments` for the past 7 days (bottom)<br>
-
-Looking at these evaluation results, users get to realize how diligent they've been so far. Conversely, if the completion rate is low and only small amounts of segments had been completed, it's a good opportunity for users to reflect on themselves.
-
-
-### Almost the End
-So far we've gone through the main functions of our app. Other functions such as signing out, deleting account, error handling, and login authentication are, in my opinion, pretty trivial, so we'll not elaborate too much about them! By the way, the triggered animations of Sweety are all different when clicking different things. Feel free to try these additional functions!
-
-# More about My-sweety
-## 3D Model Rendering
-In fact, our initial app was just a scheduling app. Then, we thought that it'll be more interesting and vigorous for the app to have a virtual assistant, just like Sweety! Thanks to [mixamo](https://www.mixamo.com/), we got a cool character and animations. However, we still need to do some preprocessing and write some code to embedded a 3D model into our app. Following the [tutorial](https://codeworkshop.dev/blog/2021-01-20-react-three-fiber-character-animation/?fbclid=IwAR1nMbHYSuauk2POh57G2vpFaDFsMfA8nVgyRZEMF-oczUHxl1_IJQ8IhKQ ) here: 
-
-1. We first use a open-source 3D computer graphics software [blender](https://www.blender.org/) to stash animations to our character. Then we export it as a gltf file.
-![](https://i.imgur.com/ilpJ4GU.png)
-
-2. Then use a package called [gltfjsx](https://github.com/pmndrs/gltfjsx) to generate jsx related file based on the given gltf file. The result will be something like this: 
-```javascript=+
-import React, { useRef } from 'react'
-import { useGLTF, useAnimations } from '@react-three/drei'
-
-export default function Model(props) {
-  const group = useRef()
-  const { nodes, materials, animations } = useGLTF('/girl.gltf')
-  const { actions } = useAnimations(animations, group)
-  return (
-    <group ref={group} {...props} dispose={null}>
-      <group rotation={[Math.PI / 2, 0, 0]} scale={[0.01, 0.01, 0.01]}>
-        <primitive object={nodes.Hips} />
-        <skinnedMesh
-          geometry={nodes.Girl_Body_Geo.geometry}
-          material={materials.Girl01_Body_MAT1}
-          skeleton={nodes.Girl_Body_Geo.skeleton}
-        />
-        <skinnedMesh
-          geometry={nodes.Girl_Brows_Geo.geometry}
-          material={materials.Girl01_Brows_MAT1}
-          skeleton={nodes.Girl_Brows_Geo.skeleton}
-        />
-        <skinnedMesh
-          geometry={nodes.Girl_Eyes_Geo.geometry}
-          material={materials.Girl01_Eyes_MAT1}
-          skeleton={nodes.Girl_Eyes_Geo.skeleton}
-        />
-        <skinnedMesh
-          geometry={nodes.Girl_Mouth_Geo.geometry}
-          material={materials.Girl01_Mouth_MAT1}
-          skeleton={nodes.Girl_Mouth_Geo.skeleton}
-        />
-      </group>
-    </group>
-  )
-}
-
-useGLTF.preload('/girl.gltf')
-```
-
-3. Next, use `react-three-fiber` to add a Canvas, Camera,and Light component to contain the given 3D model. Finally, with `useEffect` and `useRef`, we get to switch different animations among the model.
-
-
-## Scheduling Algorithm
-This is an algorithm which can turn all the added tasks into a well-arranged schedule. 
-> **Input**:
-> 
->   1. Tasks to be scheduled
->   
->   2. The time periods that is currently occupied by previously scheduled tasks.
->
->   3. The user's weekly available time
-
-> **Output**: 
-> 
-> 1. A new schedule
-
-Each input task has the following properties: _Name, Priority, Needtime, Separate, Deadline_.
-
-When the backend server gets a calculation request, it calls our scheduling algorithm. The way we take `priority` into account is that we sort the tasks by their priorities in advance, which will make the subsequent permutation always arrange the high-priority task to an earlier date. Then, we basically use brute force to permute all possible events order. For each way of permutation, distribute them into different days. So far we just get a possible schedule. However, for each possible schedule, we set some rules to determine if it's legitimate. The rules are as follows: 
-
-**Rules**
-> * not legitimate if the any event exceeds the deadline.
-> * not legitimate if the any event is repeated in one day.
-> * not legitimate if the total working hours exceed the available time on that day.
-
-Once a possible schedule is determined as legitimate, we will push it into an array. However, as the number of events goes even higher, the algorithm could spend too much time and memory. Therefore, we set a threshold of the length of that array. Once over the threshold, we stop calculating any possible schedule.
-
-Right now we only have few information from users to do optimization. In the future, we hope to include more personal traits to do calculation, such as personality or week preference. Therefore, to evaluate a schedule, we temporily set a performance indicator like this:
-
-**the pseudo code which calculates the performance indicator**
-```javascript=+
-let performance = 0
-for days in schedule
-    for event in days
-        performance += day.date - events.dealine
-    end
-end
-```
-In this code, the `performance` measures how early the event is done. To make sure the tasks are arranged earlier so as to prevent procrastination, `performance` should be as large as possible. Luckily, in the permutation stage, we arrange events into schedule from present to future. So it's highly possible that the generated schedule already has a pretty good `performance`. As mentioned earlier, the schedules in the limited array, say 100 schedules, are relatively good.  We finally choose a schedule that has the highest `performance` among the 100 relatively good schedules to be the winner, that is, the output schedule of this algorithm. 
-
-
-## :evergreen_tree: File Tree
-
-:books:my-sweety                           
-├─ :open_file_folder:backend                          
-│  ├─ :open_file_folder:src                           
-│  │  ├─ :open_file_folder:models                     
-│  │  │  └─ :green_book:User.js                 
-│  │  ├─ :open_file_folder:routes                     
-│  │  │  ├─ :open_file_folder:api                     
-│  │  │  │  ├─ :green_book:account.js           
-│  │  │  │  ├─ :green_book:data.js              
-│  │  │  │  ├─ :orange_book:index.js        
-│  │  │  └─ :orange_book:index.js                
-│  │  ├─ :green_book:main.js                    
-│  │  ├─ :green_book:mongo.js                   
-│  │  └─ :green_book:schedule.js                
-│  └─ :ledger:package.json            
-├─ :open_file_folder:frontend                                     
-│  ├─ :open_file_folder:src                           
-│  │  ├─ :open_file_folder:Components                 
-│  │  │  ├─ :green_book:AddDialog.js            
-│  │  │  ├─ :green_book:CalenderDates.js        
-│  │  │  ├─ :green_book:CalenderDrawer.js       
-│  │  │  ├─ :green_book:CalenderPopUpWindow.js  
-│  │  │  ├─ :green_book:model3D.js              
-│  │  │  ├─ :green_book:ModePanel.js            
-│  │  │  ├─ :green_book:SignOutPanel.js         
-│  │  │  ├─ :green_book:SignOutPopUpWindow.js   
-│  │  │  ├─ :green_book:sweety.js               
-│  │  │  └─ :green_book:TaskDialog.js           
-│  │  ├─ :open_file_folder:containers                 
-│  │  │  ├─ :open_file_folder:LoginPage               
-│  │  │  │  ├─ :art:login.css            
-│  │  │  │  ├─ :blue_book:LoginCard.js         
-│  │  │  │  ├─ :blue_book:LoginPage.js         
-│  │  │  │  └─ :blue_book:SweetyLoginPage.js   
-│  │  │  ├─ :open_file_folder:mainPage                
-│  │  │  │  ├─ :open_file_folder:EvalutationMode      
-│  │  │  │  │  ├─ :green_book:EvalChart.js      
-│  │  │  │  │  ├─ :green_book:EvalPie.js        
-│  │  │  │  │  └─ :green_book:Evaluation.js     
-│  │  │  │  ├─ :blue_book:Calender.js          
-│  │  │  │  ├─ :blue_book:Calender_old.js      
-│  │  │  │  ├─ :blue_book:Header.js            
-│  │  │  │  ├─ :blue_book:Panel.js             
-│  │  │  │  ├─ :blue_book:ScheduledList.js     
-│  │  │  │  └─ :blue_book:TodoList.js          
-│  │  │  ├─ :globe_with_meridians:api.js                  
-│  │  │  ├─ :orange_book:App.js                  
-│  │  │  └─ :orange_book:Authenticate.js         
-│  │  ├─ :open_file_folder:hooks                      
-│  │  │  ├─ :closed_book:useCalender.js          
-│  │  │  ├─ :closed_book:useDisplayStatus.js     
-│  │  │  └─ :closed_book:useTodoList.js          
-│  │  ├─ :art:App.css               
-│  │  ├─ :art:index.css                  
-│  │  ├─ :orange_book:index.js           
-│  └─ :ledger:package.json                 
-└─ :ledger:package.json     
-
-
-## Contribution
-Oftentimes, we debug together, so for the following division of labor, we'll just list the "main parts" that each of us are responsible for.
+Division of labour：
 
 * B06502028 莊立楷
-    > - 前後端資料傳送 & DB
-    > - 登入&登出系統
-    > - 前端 display message
-    > - 前端 home page, login page UI
-    > - 前端 evaluation mode UI
-    > - 前端 schedule mode 各種UI: todolist, scheduled list, popupWindow, mode switching 
-    > - 3D model, animations製作與render
-    > - README
-    > - Demo影片
-    > - FB貼文
-* B06502155 陳冠綸
-    > * 設計前端 UI 與各個component的互動
-    > * TODO list 和 scheduled list 的增減
-    > * 控制 schedule的available time 
-    > * 將後端傳回的schedule 資料經過處理後 render到前端
-    > * schedule上的事件標示為完成或是移除
-    > * schedule 日期切換
-    > * 處理前端會遇到的error情況
-    > * 將網站 deploy 到 heroku
-    > * README
-* B07502003 馮其安
-    > * schedule 排程設計
-    > * schedule 傳送與接收
-    > * 將schedule事件回歸todolist
-    > * 刪除空events與更新畫面
-    > * 3D model 加入頁面
-    > * 將排程合併並更新
-    > * 各種exception處理
-    > * installation 測試
-    > * README
+    > - HashMap implementation
+    > - Hash Collision, $\lambda$, and `load factor` analysis.
+    > - Report
+* B06502018 傅子豪
+    > - Red Black Tree implementation
+    > - Time Analysis of HashMap in different `load factor`, `TREEIFY_THRESHOLD`, `input node numbers`
+    > - Report 
     
