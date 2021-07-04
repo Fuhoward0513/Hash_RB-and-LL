@@ -66,6 +66,7 @@ drawTimeToSearch_N_Node(10000)
 
 ##### output: 
 橫軸: bucket 串接元素數量, 縱軸: Probability
+
 ![](https://i.imgur.com/JqbbxQ9.png)
 
 <br>
@@ -81,6 +82,7 @@ drawTimeToSearch_N_Node(10000)
 橫軸: load factor
 
 縱軸: 平均串接元素數量 λ
+
 ![](https://i.imgur.com/ImcqfHE.png)
 
 ---
