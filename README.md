@@ -156,7 +156,7 @@ drawTimeToSearch_N_Node(10000)
 
 閱讀到這裡後我們的第一個想法為：為何這些參數的值是這樣？我們可以理解`TREEIFY_THRESHOLD`不能太大，因為這樣永遠都無法轉換成Red Black Tree，若Linked List太長，搜尋效率就只能是較慢的O(N)。但也不能太小，因為這樣會太頻繁地轉換Red Black Tree，影響建立Map的效率。另外，`load factor`決定table何時要double size，所以也會影響到Linked List的長度。因此，我們認為應該會有一個較好的參數組合(`TREEIFY_THRESHOLD`, `load factor`)來使建立map的效率較好，且同時搜尋時間也能較快，在本次專題報告中，我們會先簡述自己實作HashMap的過程，接著我們會不斷改變這幾個變因，實測不同參數下的效能分析。
 
-:o: 另外，建議讀者將以下的實驗與分析內容都閱讀完畢以幫助理解吸收，而如果只是想知道我們實作的結論和整理的結果，也可以直接跳到文末的[Conclusion](#-Conclusion)喔!
+:o: 另外，建議讀者將以下的實驗與分析內容都閱讀完畢以幫助理解吸收，而如果只是想知道我們實作的結論和整理的結果，也可以直接跳到文末的[Conclusion](#bulb-conclusion)喔!
 
 
 
@@ -432,7 +432,7 @@ c. `load factor`=150, `TREEIFY_THRESHOLD`=80、160、240 (因由上圖看出`loa
 
 在我們經過一連串的實作與測試之後，我們發現其實 HashMap 的參數: `load factor`和`TREEIFY_THRESHOLD` 可以依照使用者需求來有效選擇的 !
 以下是我們統整出的步驟流程:
-1. 資料量的多寡: 依照使用者要存入的"資料量的多寡"，我們可以參考 [Poisson Probability Model](#-Load-Factor-amp-Probability-of-Hash-Collision-lambda)原理，先插入一輪觀察bucket內元素平均數量λ，:heavy_check_mark: 畫出在此資料量下的 λ 與 `load factor`關係圖。
+1. 資料量的多寡: 依照使用者要存入的"資料量的多寡"，我們可以參考 [Poisson Probability Model](#mag_right-load-factor--probability-of-hash-collision-λ)原理，先插入一輪觀察bucket內元素平均數量λ，:heavy_check_mark: 畫出在此資料量下的 λ 與 `load factor`關係圖。
 2. 記憶體分配: 我們接著可以依照我們記憶體分配的狀況來:heavy_check_mark:挑選我們的`load factor`(可Step1圖中估算控制table size)。
 
    :point_right:若記憶題不足的情況下: 挑選較大的`load factor`，使擴容發生的頻率降低，因此可以省下較多的記憶體空間，但相對的在 Construct HashMap 所需的時間就會比較長。
