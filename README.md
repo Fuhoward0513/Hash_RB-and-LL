@@ -17,7 +17,7 @@ git clone https://github.com/Fuhoward0513/Hash_RB-and-LL.git
 ```
 #### 2. 安裝必要 packages: 切換路徑至 /Hash_RB-and-LL/，並安裝 requirements.txt
 ```
-pip insatall -r requirements.txt
+pip install -r requirements.txt
 ```
 ### Execution
 依照上述步驟安裝完成後，就可以開始執行程式，創造自己的 HashMap !!!
