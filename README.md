@@ -211,7 +211,7 @@ drawTimeToSearch_N_Node(10000)
 ```
 :ab: 除此之外，在本次資料集中我們使用的是英文單字，我們用作其單字本身作為key代入hash function中，我們所使用的hash function為：
 
-***hash value*** $=s[0]\cdot31^{n-1} + s[1]\cdot31^{n-2} + \cdots + s[n-1]$
+![](https://i.imgur.com/CeI6sNF.png)
 
 其中`s`為單字字串，`s[i]`為單字中第i個位置的字元的ASCII值，`n`為單字長度。最後將算得`hash value` 去mod table size即可得到其在table該存放的index位置，code如下：
 ```python+=
