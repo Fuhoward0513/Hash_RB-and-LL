@@ -10,9 +10,7 @@ from src.drawer.TimeToTreeifyTheshold import drawTreeifyThershold
 
 # drawDistribution(nodeNum=50000,loadFactor=5, drawing=True)
 # drawLFandLambda()
-drawRatioLLandRBTree(TT=4, drawing=True)
+# drawRatioLLandRBTree(TT=4, drawing=True)
 # drawTimeToConstructMap(10000)
 # drawTimeToSearch_N_Node(10000)
-# drawTimeToLoadFactor(10000, 300)
-# drawTreeifyThershold(1000)
 
