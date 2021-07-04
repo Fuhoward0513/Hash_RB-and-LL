@@ -8,7 +8,7 @@
 
 ## :earth_africa:環境設置以及測試範例執行
 
-這個專案主要為python版本的HashMap Implementation，以及我們所撰寫的以各式各樣參數作實驗的腳本，按照下面的指令執行你將可以重新產生與我們研究報告相同的圖，歡迎嘗試更改其他參數來觀察更多有趣的現象！
+這個專案主要為python版本的HashMap Implementation，以及我們所撰寫的以各式各樣參數去做實驗的腳本，按照下面的指令執行你將可以重新產生與我們研究報告相同的圖，歡迎嘗試更改其他參數來觀察更多有趣的現象！
 
 ### Installation
 #### 1. **Clone the repository**
@@ -16,18 +16,18 @@
 git clone https://github.com/Fuhoward0513/Hash_RB-and-LL.git
 ```
 #### 2. 安裝必要 packages: 切換路徑至 /Hash_RB-and-LL/，並安裝 requirements.txt
-
-       pip insatall -r requirements.txt
-
+```
+pip insatall -r requirements.txt
+```
 ### Execution
 依照上述步驟安裝完成後，就可以開始執行程式，創造自己的 HashMap !!!
 
 #### 1. 執行 `main.py`
 
 路徑一樣在 .../Hash_RB-and-LL/，並執行 `main.py`
-          
-      python main.py
-
+```          
+python main.py
+```
 `main.py` 內一共有五個 function 可以執行(如下圖)，依照自己想看的結果可以挑選來執行，接著會一一介紹每個 function 所執行的結果為何。
 
 ```python+=
