@@ -24,7 +24,7 @@ pip insatall -r requirements.txt
 
 #### 1. 執行 `main.py`
 
-路徑一樣在 .../Hash_RB-and-LL/，並執行 `main.py`
+在根目錄 /Hash_RB-and-LL/，執行 `main.py`
 ```          
 python main.py
 ```
