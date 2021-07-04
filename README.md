@@ -1,14 +1,3 @@
-可能要做的事情：
-- [x] Conclusion
-- [x] 把重點標一標
-- [ ] 包好repo，寫使用說明，安裝方式，可以跑哪些圖
-- [ ] Demo影片
-- [ ] 再看一下Mark還有什麼要求
-
-
-
-
-
 # 深入探討jdk1.8版本HashMap機制之效能分析及其改良
 
 :star: jdk (Java Development Kit) 的HashMap處理hash collision的機制原為在衝突的bucket中添加Linked List，但在jdk1.8改版後，若Linked List太長，則改為使用Red Black Tree。然而，在這樣的機制下HashMap的效能真的變好了嗎？這是幾乎沒有前人懷疑過，但卻相當重要的，因為效能的好壞在資料量一大就會變得比較明顯。我們很好奇於是展開了一系列的研究，最後發現了許多有趣的東西，準備與你們分享！
@@ -18,14 +7,14 @@
 <br><br>
 
 ## :earth_africa:環境設置以及測試範例執行
+
+這個專案主要為python版本的HashMap Implementation，以及我們所撰寫的以各式各樣參數作實驗的腳本，按照下面的指令執行你將可以重新產生與我們研究報告相同的圖，歡迎嘗試更改其他參數來觀察更多有趣的現象！
+
 ### Installation
-#### 1. 自我們的GitHub下載[Hash_RB-and-LL](https://github.com/Fuhoward0513/Hash_RB-and-LL)
-
-可以直接 Clone或是點擊下載
-
-![](https://i.imgur.com/AlgFNVs.png)
-
-
+#### 1. **Clone the repository**
+```shell=
+git clone https://github.com/Fuhoward0513/Hash_RB-and-LL.git
+```
 #### 2. 安裝必要 packages: 切換路徑至 /Hash_RB-and-LL/，並安裝 requirements.txt
 
        pip insatall -r requirements.txt
@@ -33,13 +22,13 @@
 ### Execution
 依照上述步驟安裝完成後，就可以開始執行程式，創造自己的 HashMap !!!
 
-#### 1. 執行 main.py
+#### 1. 執行 `main.py`
 
-路徑一樣在 .../Hash_RB-and-LL/，並執行 main.py
+路徑一樣在 .../Hash_RB-and-LL/，並執行 `main.py`
           
       python main.py
 
-main.py 內一共有五個 function 可以執行(如下圖)，依照自己想看的結果可以挑選來執行，接著會一一介紹每個 function 所執行的結果為何。
+`main.py` 內一共有五個 function 可以執行(如下圖)，依照自己想看的結果可以挑選來執行，接著會一一介紹每個 function 所執行的結果為何。
 
 ```python+=
 from src.drawer.loadFactorWithAvg import drawLFandLambda
@@ -51,17 +40,20 @@ from src.drawer.SearchTimeToNodeNum import drawTimeToSearch_N_Node
 #### see description in the following modules ####
 
 drawDistribution(nodeNum=50000, loadFactor=5, drawing=True)
-drawLFandLambda()
+drawLFandLambda(nodeNum=10000)
 drawRatioLLandRBTree(TT=4, drawing=True)
 drawTimeToConstructMap(10000)
 drawTimeToSearch_N_Node(10000)
 ```
 
 #### 2. Function Introduction
+在實驗中，我們使用`./src/dataLoader`中的`words_alpha.txt`中的英文單字，其上限為370103個，使用者請最多將input的資料量設為370103。
+
+---
 
 ##### a. drawDistribution(int nodeNum, int loadFactor, bool drawing, int TREEIFY_THRESHOLD=8)
 
-繪製出在插入 nodeNum 個單字後 HashMap 中 bucket 串接元素數量的機率分布圖
+繪製出在插入 nodeNum 個單字後 HashMap 中 bucket 串接元素數量的機率分布圖(當數據量大於50000時，因為factorial計算量過大將不會畫出Poisson Distribution。)
 ##### Input: 
 
 - nodeNum: 要插入 HashMap 的單字數量
@@ -74,13 +66,14 @@ drawTimeToSearch_N_Node(10000)
 
 ##### output: 
 橫軸: bucket 串接元素數量, 縱軸: Probability
->`input nodes`: 370,000<br>
->`load factor`: 10
-> ![](https://i.imgur.com/Xg9hs1J.png)
+![](https://i.imgur.com/JqbbxQ9.png)
 
+<br>
+
+---
 
 #### b. drawLFandLambda(int nodeNum)
-繪製再插入 nodeNum 個單字後，load factor 與 平均串接元素數量 λ 關係圖。
+繪製在插入 nodeNum 個單字後，load factor 與 平均串接元素數量 λ 關係圖。
 ##### Input: 
 - nodeNum: 要插入 HashMap 的單字數量
 
@@ -90,11 +83,12 @@ drawTimeToSearch_N_Node(10000)
 縱軸: 平均串接元素數量 λ
 ![](https://i.imgur.com/ImcqfHE.png)
 
+---
 
 #### c. drawRatioLLandRBTree(int TT=4, bool drawing=True)
 繪製插入單字數量與RBTree與Linked List出現的數量比例關係圖 
 ##### Input: 
-- TT: HashMap 參數
+- TT: Treeify Threshold (HashMap 參數)
 - drawing: 是否輸出圖
 
 #### Output:
@@ -104,6 +98,7 @@ drawTimeToSearch_N_Node(10000)
 
 ![](https://i.imgur.com/cITkyJG.png)
 
+---
 
 #### d. drawTimeToConstructMap(NodeNum)
 繪製插入 NodeNum 個單字與 Construct a HashMap with NodeNum 個單字所需時間的關係圖
@@ -116,6 +111,8 @@ drawTimeToSearch_N_Node(10000)
 縱軸: Time to Construct a HashMap
 
 ![](https://i.imgur.com/Lj8e23X.png)
+
+---
 
 #### e. drawTimeToSearch_N_Node(NodeNum)
 繪製 NodeNum 個單字與 Search NodeNum 個單字所需時間的關係圖
@@ -132,6 +129,8 @@ drawTimeToSearch_N_Node(10000)
 
 
 ## :orange_book: Introduction & More about HashMap
+下面開始我們的技術分析報告。
+
 在開始前，我們先來簡單了解一下jdk1.8的HashMap (以下統稱HashMap) 是怎麼運作的？
 <br>參考以下概念圖：
 
@@ -269,7 +268,7 @@ nodes in bins follows a Poisson distribution (http://en.wikipedia.org/wiki/Poiss
 簡單來說，bucket後面串接的元素數量其實可以用`Poisson Distribution`來描述，在這裡就不詳說Poisson Distribution的原理。但此情境確實符合Poisson Distribution的情境，為了驗證這個機率分布是否是Poisson Distribution，我們重新做一次實驗，因為在Poisson Distribution中我們需要計算factorial，故這次僅插入50,000個英文單字，接著將實驗結果的bucket內元素數量做加權平均，得到：
 >Experimental weighted average of 'nodes in bins': 6.103515625<br>
 
-將這個值作為Poission Distribution $P\left( x \right) = \frac{{e^{ - \lambda } \lambda ^x }}{{x!}}$ 中的$\lambda$ (Possion Distribution中的peak所在的x值)，我們將之繪在同張圖上，可得：
+將這個值作為Poission Distribution ![](https://i.imgur.com/beremDh.png)中的λ (Possion Distribution中的peak所在的x值)，我們將之繪在同張圖上，可得：
 >`input nodes`: 50,000<br>
 >`load factor`: 10 <br>
 ![](https://i.imgur.com/RIJqLVn.png)
@@ -277,8 +276,8 @@ nodes in bins follows a Poisson distribution (http://en.wikipedia.org/wiki/Poiss
 奇蹟似地吻合了:bangbang:
 
 這個結果其實給我們巨大的幫助。我們有以下兩個結論：
-1. Poisson Distribution中的$\lambda$可以作為我們實驗結果中bucket串接的元素平均數量的期望值
-2. $\lambda$本身的意義可以解讀為hash collision發生的期望值
+1. Poisson Distribution中的λ可以作為我們實驗結果中bucket串接的元素平均數量的期望值
+2. λ本身的意義可以解讀為hash collision發生的期望值
 
 綜合以上兩點，我們可以推論出：
 >:heavy_check_mark: hash collision的期望值 = bucket串接元素的平均數量
@@ -289,20 +288,20 @@ nodes in bins follows a Poisson distribution (http://en.wikipedia.org/wiki/Poiss
 
 ---
 
-### 	:mag_right: Load Factor & Probability of Hash Collision $\lambda$
+### 	:mag_right: Load Factor & Probability of Hash Collision λ
 
-:bulb: 在上一節我們看到bucket中元素數量的分布成Poisson Distribution，且元素數量的平均值可以做為Poisson Distribution中的$\lambda$ (其peak所在的x值)，可視為hash collision的機率。然而，我們卻還沒解答這個$\lambda$與`load factor`的關係，在這一章節我們將來討論這個問題。
+:bulb: 在上一節我們看到bucket中元素數量的分布成Poisson Distribution，且元素數量的平均值可以做為Poisson Distribution中的λ (其peak所在的x值)，可視為hash collision的機率。然而，我們卻還沒解答這個λ與`load factor`的關係，在這一章節我們將來討論這個問題。
 
-前面我們已經討論過，`load factor`應與$\lambda$ (你可以視為碰撞機率，或bucket內平均元素數量)為正相關。從上圖也能看出來，隨著`load factor`越來越大，$\lambda$(Poisson Distribution的peak所在x值)也越大，但尚未看出明顯的關係，於是我們建立多個HashMap，每次都插入10,000個英文單字，每次都記錄其`load factor`與$\lambda$，將之繪在同張圖上，可得$\lambda$與`load factor`關係圖：
+前面我們已經討論過，`load factor`應與λ (你可以視為碰撞機率，或bucket內平均元素數量)為正相關。從上圖也能看出來，隨著`load factor`越來越大，λ(Poisson Distribution的peak所在x值)也越大，但尚未看出明顯的關係，於是我們建立多個HashMap，每次都插入10,000個英文單字，每次都記錄其`load factor`與λ，將之繪在同張圖上，可得λ與`load factor`關係圖：
 
 ![](https://i.imgur.com/ImcqfHE.png)
 
-我們可以從圖中直接觀察出來，$\lambda$與`load factor` 同時擁有線性和步階的關係。我們知道`load factor`越大，越不容易resize。此結果相當合理，在`load factor`跨越一個階段後，HashMap沒有發生resize，故累積了相較之下兩倍的元素在bucket裡面，元素平均數量兩倍，$\lambda$也因此兩倍。
+我們可以從圖中直接觀察出來，λ與`load factor` 同時擁有線性和步階的關係。我們知道`load factor`越大，越不容易resize。此結果相當合理，在`load factor`跨越一個階段後，HashMap沒有發生resize，故累積了相較之下兩倍的元素在bucket裡面，元素平均數量兩倍，λ也因此兩倍。
 
 :heavy_check_mark: 到此總算解決了我們一開始問的問題：
 >能不能從`load factor`就大概知道bucket內元素長度為何，我們就能知道該將`TREEIFY_THRESHOLD`設為多少。
 >
-儘管我們沒有得到明確的equation。但我們可以用:bangbang:上圖做為查表工具，查出對應load factor的元素平均長度:bangbang:，著實夠用了。因此，在之後的實驗中，我們會加入TREEIFY_THRESHOLD的變因進去，情況會變得更複雜，而為了不要讓HashMap裡全是Linked List或全是RB Tree，我們會先參考對應HashMap的$\lambda$為多少，再將`TREEIFY_THRESHOLD`設為附近範圍的值，以便我們做「HashMap裡同時有Linked List以及RB Tree」情況的分析。
+儘管我們沒有得到明確的equation。但我們可以用:bangbang:上圖做為查表工具，查出對應load factor的元素平均長度:bangbang:，著實夠用了。因此，在之後的實驗中，我們會加入TREEIFY_THRESHOLD的變因進去，情況會變得更複雜，而為了不要讓HashMap裡全是Linked List或全是RB Tree，我們會先參考對應HashMap的λ為多少，再將`TREEIFY_THRESHOLD`設為附近範圍的值，以便我們做「HashMap裡同時有Linked List以及RB Tree」情況的分析。
 
 ---
 
@@ -397,15 +396,15 @@ HashMap 的 Searching Time 的效率與整個 HashMap 的結構有很大的關�
 
 接著我們用上述方法做了三組測試: 
 
-a. `load factor`=50, `TREEIFY_THRESHOLD`=20、40、80 (因由上圖看出`load factor`=50對應$\lambda$=40)
+a. `load factor`=50, `TREEIFY_THRESHOLD`=20、40、80 (因由上圖看出`load factor`=50對應λ=40)
 
 ![](https://i.imgur.com/jBKDaVn.png)
 
-b. `load factor`=100, `TREEIFY_THRESHOLD`=40、80、120 (因由上圖看出`load factor`=100對應$\lambda$=80)
+b. `load factor`=100, `TREEIFY_THRESHOLD`=40、80、120 (因由上圖看出`load factor`=100對應λ=80)
 
 ![](https://i.imgur.com/cSgtdrG.png)
 
-c. `load factor`=150, `TREEIFY_THRESHOLD`=80、160、240 (因由上圖看出`load factor`=150對應$\lambda$=160)
+c. `load factor`=150, `TREEIFY_THRESHOLD`=80、160、240 (因由上圖看出`load factor`=150對應λ=160)
 
 ![](https://i.imgur.com/vKIG5Ec.png)
 
@@ -434,7 +433,7 @@ c. `load factor`=150, `TREEIFY_THRESHOLD`=80、160、240 (因由上圖看出`loa
 在我們經過一連串的實作與測試之後，我們發現其實 HashMap 的參數: `load factor`和`TREEIFY_THRESHOLD` 可以依照使用者需求來有效選擇的 !
 以下是我們統整出的步驟流程:
 1. 資料量的多寡: 依照使用者要存入的"資料量的多寡"，我們可以參考 [Poisson Probability Model](#-Load-Factor-amp-Probability-of-Hash-Collision-lambda)原理，先插入一輪觀察bucket內元素平均數量λ，:heavy_check_mark: 畫出在此資料量下的 λ 與 `load factor`關係圖。
-2. 記憶體分配: 我們接著可以依照我們記憶體分配的狀況來:heavy_check_mark:挑選我們的`load factor`。
+2. 記憶體分配: 我們接著可以依照我們記憶體分配的狀況來:heavy_check_mark:挑選我們的`load factor`(可Step1圖中估算控制table size)。
 
    :point_right:若記憶題不足的情況下: 挑選較大的`load factor`，使擴容發生的頻率降低，因此可以省下較多的記憶體空間，但相對的在 Construct HashMap 所需的時間就會比較長。
    
@@ -472,12 +471,14 @@ Division of labor：
 
 * B06502028 莊立楷
     > - HashMap implementation
-    > - Hash Collision, $\lambda$, and `load factor` analysis.
-    > - Report
+    > - Hash Collision, Poisson Distribution, λ, and `load factor` analysis.
+    > - README技術報告
+    > - Demo影片
 * B06502018 傅子豪
     > - Red Black Tree implementation
     > - Time Analysis of HashMap in different `load factor`, `TREEIFY_THRESHOLD`, `input node numbers`
-    > - Report 
+    > - README技術報告
+    > - 執行環境與安裝撰寫
 
 ## 參考資料
 1. [Java 集合深入理解（17）：HashMap 在 JDK 1.8 后新增的红黑树结构](https://blog.csdn.net/u011240877/article/details/53358305#hashmap-%E5%9C%A8-jdk-18-%E4%B8%AD%E6%96%B0%E5%A2%9E%E7%9A%84%E6%93%8D%E4%BD%9C-%E6%A0%91%E5%BD%A2%E7%BB%93%E6%9E%84%E4%BF%AE%E5%89%AA-split)
