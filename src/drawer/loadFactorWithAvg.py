@@ -1,6 +1,5 @@
 from .poissonDraw import drawDistribution
 import matplotlib.pyplot as plt
-import pickle
 
 '''
 In this file, we import "drawDistribution" module from poissonDraw. 
@@ -15,16 +14,6 @@ def drawLFandLambda(nodeNum=10000):
         expX, expP, normX, normY, poissonX, poissonY, Lambda, rootType = drawDistribution(nodeNum=nodeNum,loadFactor=LF, drawing=False,TREEIFY_THRESHOLD=8)
         LFX.append(LF)
         LambdaY.append(Lambda)
-
-    # with open("LFX.txt", "wb") as fp:   #Pickling
-    #     pickle.dump(LFX, fp)
-    # with open("LambdaY.txt", "wb") as fp:   #Pickling
-    #     pickle.dump(LambdaY, fp)
-
-    # with open("LFX.txt", "rb") as fp:   #Unpickling
-    #     LFX = pickle.load(fp)
-    # with open("LambdaY.txt", "rb") as fp:   #Unpickling
-    #     LambdaY = pickle.load(fp)
 
 
     plt.title("Lambda vs. load factor")

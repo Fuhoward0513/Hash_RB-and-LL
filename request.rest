@@ -1,4 +1,0 @@
-GET https://www.dictionaryapi.com/api/v3/references/thesaurus/json/?id=umpire&key=0ee0aa7e-394f-48bc-a9ba-3c9960029c94
-
-###
-GET https://api.dictionaryapi.dev/api/v2/entries/en_US/hello

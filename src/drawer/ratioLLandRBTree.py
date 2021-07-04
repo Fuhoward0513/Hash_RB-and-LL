@@ -1,6 +1,5 @@
 from .poissonDraw import drawDistribution
 import matplotlib.pyplot as plt
-import pickle
 
 '''
 In drawRatioLLandRBTree, we want to know how LF, TT affect the numbers of LL and RBTree.
@@ -44,23 +43,6 @@ def drawRatioLLandRBTree(TT=4, drawing=True):
             ratioY.append(RBTree/LL)
         # ratioY.append(LL)
 
-        # with open("numberNodes.txt", "wb") as fp:   #Pickling
-        #     pickle.dump(numberNodes, fp)
-        # with open("LLY.txt", "wb") as fp:   #Pickling
-        #     pickle.dump(LLY, fp)
-        # with open("RBTreeY.txt", "wb") as fp:   #Pickling
-        #     pickle.dump(RBTreeY, fp)
-        # with open("EmptyY.txt", "wb") as fp:   #Pickling
-        #     pickle.dump(EmptyY, fp)    
-
-        # with open("numberNodes.txt", "rb") as fp:   #Unpickling
-        #     numberNodes = pickle.load(fp)
-        # with open("LLY.txt", "rb") as fp:   #Unpickling
-        #     LLY = pickle.load(fp)
-        # with open("RBTreeY.txt", "rb") as fp:   #Unpickling
-        #     RBTreeY = pickle.load(fp)
-        # with open("EmptyY.txt", "rb") as fp:   #Unpickling
-        #     EmptyY = pickle.load(fp)
 
         print("number of nodes:",numberNodes)
         print("Number of Linked List",LLY)

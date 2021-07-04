@@ -1,5 +1,4 @@
 matplotlib
 networkx
 numpy
-pickleshare==0.7.5
 scipy
