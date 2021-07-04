@@ -19,6 +19,10 @@ git clone https://github.com/Fuhoward0513/Hash_RB-and-LL.git
 ```
 pip install -r requirements.txt
 ```
+### Tools/Packages
+- matplotlib
+- numpy
+- scipy
 ### Execution
 依照上述步驟安裝完成後，就可以開始執行程式，創造自己的 HashMap !!!
 
