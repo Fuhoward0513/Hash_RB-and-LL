@@ -19,7 +19,7 @@ def drawTimeToSearch_N_Node(NodeNum):
     plt.ylabel("Time")
     plt.legend()
     # Load_factor = [0.75, 1.5, 3, 6]
-    Treeify_thershold = [1, 2, 4, 8]
+    Treeify_thershold = [80, 160, 240]
     for TH in Treeify_thershold:
         t = []
         Node_cnt = []
@@ -30,7 +30,7 @@ def drawTimeToSearch_N_Node(NodeNum):
             random.shuffle(dataList)
             
             # insert N Nodes
-            hashMap = HashMap(loadFactor=300,TREEIFY_THRESHOLD=TH)
+            hashMap = HashMap(loadFactor=150,TREEIFY_THRESHOLD=TH)
             for k in range(i):
                 linkedNode = LLNode(dataList[k]["word"], dataList[k]["word"])
                 hashMap.putValue(linkedNode)
